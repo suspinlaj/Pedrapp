@@ -30,9 +30,32 @@ class _MapaPantallaState extends State<MapaPantalla> {
 
   // Obtiene los lugares desde el servicio y actualiza la vista
   Future<void> _recargarLista() async {
-    final lista = await LugarService.obtener();
-    setState(() => _misLugares = lista);
+  final lista = await LugarService.obtener();
+  setState(() => _misLugares = lista);
+
+  if (lista.isNotEmpty) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Si solo hay un punto, movemos la cámara manualmente
+      if (lista.length == 1) {
+        final punto = LatLng(lista.first.latitud, lista.first.longitud);
+        _mapController.move(punto, 13.0); // Zoom 
+      } 
+      // Si hay varios, calculamos el área (bounds) y encuadramos
+      else {
+        final bounds = LatLngBounds.fromPoints(
+          lista.map((l) => LatLng(l.latitud, l.longitud)).toList()
+        );
+        
+        _mapController.fitCamera(
+          CameraFit.bounds(
+            bounds: bounds,
+            padding: const EdgeInsets.all(50), 
+          ),
+        );
+      }
+    });
   }
+}
 
   // Abre la app de Waze con las coordenadas del lugar
   Future<void> _abrirWaze(double lat, double lng) async {
