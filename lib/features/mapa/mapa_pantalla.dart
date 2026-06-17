@@ -1,6 +1,7 @@
 import 'dart:async'; 
 import 'dart:convert'; 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -38,6 +39,8 @@ class MapaPantalla extends StatefulWidget {
 class _MapaPantallaState extends State<MapaPantalla> {
   List<Lugar> _misLugares = [];
   final MapController _mapController = MapController();
+  
+  bool _mostrarLista = false;
 
   @override
   void initState() {
@@ -110,36 +113,53 @@ class _MapaPantallaState extends State<MapaPantalla> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Guardar este punto exacto'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: "Ej: Pista de atletismo"),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (controller.text.isNotEmpty) {
-                setState(() {
-                  _misLugares.add(Lugar(
-                    nombre: controller.text,
-                    latitud: puntoClicado.latitude,
-                    longitud: puntoClicado.longitude,
-                  ));
-                });
-                await _guardarLugaresEnMemoria(); 
-                Navigator.pop(context);
-                Scaffold.of(context).openDrawer();
-              }
-            },
-            child: const Text('Guardar', style: TextStyle(color: Colores.rojo)),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          String? error;
+          return AlertDialog(
+            title: const Text('Guardar este punto exacto'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(hintText: "Ej: Pista de atletismo"),
+                  autofocus: true,
+                  inputFormatters: [LengthLimitingTextInputFormatter(19)],
+                ),
+                if (error != null) ...[
+                  const SizedBox(height: 10),
+                  Text(error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                ]
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+              ),
+              TextButton(
+                onPressed: () async {
+                  if (controller.text.isNotEmpty) {
+                    setState(() {
+                      _misLugares.add(Lugar(
+                        nombre: controller.text,
+                        latitud: puntoClicado.latitude,
+                        longitud: puntoClicado.longitude,
+                      ));
+                      _mostrarLista = true; 
+                    });
+                    await _guardarLugaresEnMemoria(); 
+                    Navigator.pop(context);
+                  } else {
+                    setStateDialog(() => error = "Ponle un nombre!");
+                  }
+                },
+                child: const Text('Guardar', style: TextStyle(color: Colores.rojo)),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
@@ -150,6 +170,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
     
     List<dynamic> sugerencias = [];
     bool estaBuscando = false;
+    String? error;
     Timer? temporizador; 
 
     showDialog(
@@ -167,13 +188,14 @@ class _MapaPantallaState extends State<MapaPantalla> {
                   TextField(
                     controller: nombreController,
                     decoration: const InputDecoration(hintText: "Nombre (Ej: Gimnasio)"),
+                    inputFormatters: [LengthLimitingTextInputFormatter(19)],
                   ),
                   const SizedBox(height: 10),
                   
                   TextField(
                     controller: direccionController,
                     decoration: const InputDecoration(
-                      hintText: "Direccion (Ej: Calle Mayor, Madrid)",
+                      hintText: "Direccion (Ej: Calle Mayor)",
                       suffixIcon: Icon(Icons.search),
                     ),
                     onChanged: (texto) {
@@ -187,7 +209,6 @@ class _MapaPantallaState extends State<MapaPantalla> {
                       if (temporizador?.isActive ?? false) temporizador!.cancel();
                       
                       temporizador = Timer(const Duration(milliseconds: 800), () async {
-                        // ESCUDO 1: Si la ventana ya esta cerrada, abortamos mision
                         if (!dialogContext.mounted) return;
 
                         setStateDialog(() => estaBuscando = true);
@@ -202,7 +223,6 @@ class _MapaPantallaState extends State<MapaPantalla> {
                             }
                           );
                           
-                          // ESCUDO 2: Comprobamos despues de la descarga por si acaso
                           if (!dialogContext.mounted) return;
 
                           if (response.statusCode == 200) {
@@ -227,6 +247,11 @@ class _MapaPantallaState extends State<MapaPantalla> {
                       child: LinearProgressIndicator(color: Colores.rojo),
                     ),
 
+                  if (error != null) ...[
+                     const SizedBox(height: 10),
+                     Text(error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                  ],
+
                   const SizedBox(height: 10),
 
                   if (sugerencias.isNotEmpty)
@@ -242,13 +267,11 @@ class _MapaPantallaState extends State<MapaPantalla> {
                             leading: const Icon(Icons.location_on, color: Colores.rojo, size: 20),
                             onTap: () async {
                               if (nombreController.text.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Ponle un nombre primero!'), backgroundColor: Colors.orange),
-                                );
+                                setStateDialog(() => error = "Escribe un nombre primero");
                                 return;
                               }
 
-                              temporizador?.cancel(); // Apagamos el reloj antes de cerrar
+                              temporizador?.cancel();
 
                               setState(() {
                                 _misLugares.add(Lugar(
@@ -261,13 +284,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
 
                               if (mounted) {
                                 Navigator.pop(dialogContext); 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Lugar guardado!'), backgroundColor: Colors.green),
-                                );
-                                _mapController.move(
-                                  LatLng(double.parse(res['lat']), double.parse(res['lon'])), 
-                                  15.0 
-                                );
+                                // Este aviso si se puede ver porque cerramos el dialog antes
                               }
                             },
                           );
@@ -280,15 +297,15 @@ class _MapaPantallaState extends State<MapaPantalla> {
             actions: [
               TextButton(
                 onPressed: () {
-                  temporizador?.cancel(); // DESTRUIMOS EL RELOJ AL CANCELAR
+                  temporizador?.cancel(); 
                   Navigator.pop(dialogContext);
                 },
                 child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
               ),
               TextButton(
                 onPressed: () async {
-                  if (nombreController.text.isNotEmpty) {
-                    temporizador?.cancel(); // DESTRUIMOS EL RELOJ AL GUARDAR MANUALMENTE
+                  if (nombreController.text.isNotEmpty && direccionController.text.isNotEmpty) {
+                    temporizador?.cancel(); 
 
                     final centroActual = _mapController.camera.center;
 
@@ -303,19 +320,12 @@ class _MapaPantallaState extends State<MapaPantalla> {
 
                     if (mounted) {
                       Navigator.pop(dialogContext); 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Lugar guardado manualmente!'), backgroundColor: Colors.green),
-                      );
                     }
                   } else {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Ponle un nombre primero!'), backgroundColor: Colors.orange),
-                      );
-                    }
+                    setStateDialog(() => error = "Tienes que escribir nombre y direccion");
                   }
                 },
-                child: const Text('Guardar manual', style: TextStyle(color: Colores.rojo, fontWeight: FontWeight.bold)),
+                child: const Text('Guardar', style: TextStyle(color: Colores.rojo, fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -326,101 +336,183 @@ class _MapaPantallaState extends State<MapaPantalla> {
 
   @override
   Widget build(BuildContext context) {
+    final paddingAbajo = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Lugares', style: TextStyle(fontFamily: 'Titulo', fontSize: 24)),
+        title: const Text('Mapa', style: TextStyle(fontFamily: 'Titulo', fontSize: 24)),
         backgroundColor: Colores.rojo,
         foregroundColor: Colors.white,
       ),
       
-      drawer: Drawer(
-        child: Column(
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colores.rojo),
-              child: Center(
-                child: Text(
-                  'PUNTOS CLAVE',
-                  style: TextStyle(color: Colors.white, fontFamily: 'Titulo', fontSize: 28),
-                ),
-              ),
-            ),
-            Expanded(
-              child: _misLugares.isEmpty
-                  ? const Center(child: Text('Anade tu primer lugar'))
-                  : ListView.builder(
-                      itemCount: _misLugares.length,
-                      itemBuilder: (context, index) {
-                        final lugar = _misLugares[index];
-                        return ListTile(
-                          leading: const Icon(Icons.location_on, color: Colores.rojo),
-                          title: Text(lugar.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min, 
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.navigation, color: Colores.gris),
-                                onPressed: () {
-                                  Navigator.pop(context); 
-                                  _abrirWaze(lugar.latitud, lugar.longitud);
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => _mostrarDialogoEliminar(index),
-                              ),
-                            ],
-                          ),
-                          
-                          onTap: () {
-                            Navigator.pop(context);
-                            _mapController.move(LatLng(lugar.latitud, lugar.longitud), 15.0);
-                          },
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-      ),
-      
       floatingActionButton: FloatingActionButton(
+        heroTag: 'btn_anadir', 
         backgroundColor: Colores.rojo,
         foregroundColor: Colors.white,
         onPressed: () => _mostrarDialogoBuscarDireccion(),
         child: const Icon(Icons.add, size: 30),
       ),
 
-      body: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: const LatLng(40.416775, -3.703790), 
-          initialZoom: 12.0,
-          onLongPress: (tapPosition, point) => _mostrarDialogoAgregarPunto(point),
-        ),
+      body: Stack(
         children: [
-          TileLayer(
-            urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-            subdomains: const ['a', 'b', 'c', 'd'],
+          
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: const LatLng(40.416775, -3.703790), 
+              initialZoom: 12.0,
+              onLongPress: (tapPosition, point) => _mostrarDialogoAgregarPunto(point),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                subdomains: const ['a', 'b', 'c', 'd'],
+              ),
+              MarkerLayer(
+                markers: _misLugares.map((lugar) {
+                  return Marker(
+                    point: LatLng(lugar.latitud, lugar.longitud),
+                    width: 45,
+                    height: 45,
+                    child: GestureDetector(
+                      onTap: () => _abrirWaze(lugar.latitud, lugar.longitud),
+                      child: const Icon(
+                        Icons.location_on,
+                        color: Colores.rojo, 
+                        size: 45,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
-          MarkerLayer(
-            markers: _misLugares.map((lugar) {
-              return Marker(
-                point: LatLng(lugar.latitud, lugar.longitud),
-                width: 45,
-                height: 45,
-                child: GestureDetector(
-                  onTap: () => _abrirWaze(lugar.latitud, lugar.longitud),
-                  child: const Icon(
-                    Icons.location_on,
+
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            left: _mostrarLista ? 0 : -300,
+            top: 0,
+            bottom: 0,
+            width: 280, 
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9), 
+                border: const Border(
+                  right: BorderSide(
                     color: Colores.rojo, 
-                    size: 45,
+                    width: 3.0, 
                   ),
                 ),
-              );
-            }).toList(),
+                boxShadow: [
+                  if (_mostrarLista)
+                    const BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    )
+                ],
+              ),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 20.0, bottom: 5.0),
+                      child: Text(
+                        'Lugares Guardados',
+                        style: TextStyle(
+                          color: Colores.rojo,
+                          fontFamily: 'Titulo', 
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const Divider(color: Colores.gris, thickness: 2.0),
+                    Expanded(
+                      child: _misLugares.isEmpty
+                          ? const Center(child: Text('No hay lugares guardados'))
+                          : ListView.separated(
+                              itemCount: _misLugares.length,
+                              separatorBuilder: (context, index) {
+                                return Divider(
+                                  color: Colores.rojo, 
+                                  indent: 40.0, 
+                                  endIndent: 40.0, 
+                                  height: 1.0,
+                                  thickness: 1.5,
+                                );
+                              },
+                              itemBuilder: (context, index) {
+                                final lugar = _misLugares[index];
+                                return InkWell(
+                                  onTap: () {
+                                    setState(() => _mostrarLista = false); 
+                                    _mapController.move(LatLng(lugar.latitud, lugar.longitud), 15.0);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.location_on, color: Colores.rojo, size: 24),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            lugar.nombre, 
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                          ),
+                                        ),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            InkWell(
+                                              onTap: () {
+                                                setState(() => _mostrarLista = false); 
+                                                _abrirWaze(lugar.latitud, lugar.longitud);
+                                              },
+                                              child: const Padding(
+                                                padding: EdgeInsets.all(6.0),
+                                                child: Icon(Icons.navigation, color: Colores.gris, size: 22),
+                                              ),
+                                            ),
+                                            InkWell(
+                                              onTap: () => _mostrarDialogoEliminar(index),
+                                              child: const Padding(
+                                                padding: EdgeInsets.all(6.0),
+                                                child: Icon(Icons.delete, color: Colors.red, size: 22),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
+
+          Positioned(
+            left: 16,
+            bottom: paddingAbajo + 16, 
+            child: FloatingActionButton(
+              heroTag: 'btn_lista',
+              backgroundColor: Colores.rojo,
+              foregroundColor: Colors.white,
+              onPressed: () {
+                setState(() {
+                  _mostrarLista = !_mostrarLista; 
+                });
+              },
+              child: Icon(_mostrarLista ? Icons.close : Icons.list, size: 30),
+            ),
+          ),
+
         ],
       ),
     );
