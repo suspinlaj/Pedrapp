@@ -126,11 +126,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
                   decoration: const InputDecoration(hintText: "Ej: Pista de atletismo"),
                   autofocus: true,
                   inputFormatters: [LengthLimitingTextInputFormatter(19)],
-                ),
-                if (error != null) ...[
-                  const SizedBox(height: 10),
-                  Text(error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
-                ]
+                )
               ],
             ),
             actions: [
@@ -219,7 +215,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
                           final response = await http.get(
                             url,
                             headers: {
-                              'User-Agent': 'Pedrapp/1.0 (mi_app_de_bomberos@gmail.com)'
+                              'User-Agent': 'Pedrapp/1.0 (tu_email@ejemplo.com)'
                             }
                           );
                           
@@ -284,7 +280,6 @@ class _MapaPantallaState extends State<MapaPantalla> {
 
                               if (mounted) {
                                 Navigator.pop(dialogContext); 
-                                // Este aviso si se puede ver porque cerramos el dialog antes
                               }
                             },
                           );
@@ -364,10 +359,12 @@ class _MapaPantallaState extends State<MapaPantalla> {
               onLongPress: (tapPosition, point) => _mostrarDialogoAgregarPunto(point),
             ),
             children: [
+              // --- MAPA A COLOR USANDO CARTODB VOYAGER ---
               TileLayer(
-                urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
                 subdomains: const ['a', 'b', 'c', 'd'],
               ),
+              // -------------------------------------------
               MarkerLayer(
                 markers: _misLugares.map((lugar) {
                   return Marker(
@@ -397,7 +394,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
             width: 280, 
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9), 
+                color: Colors.white.withValues(alpha: 0.9), 
                 border: const Border(
                   right: BorderSide(
                     color: Colores.rojo, 
@@ -431,7 +428,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
                     const Divider(color: Colores.gris, thickness: 2.0),
                     Expanded(
                       child: _misLugares.isEmpty
-                          ? const Center(child: Text('No hay lugares guardados'))
+                          ? const Center(child: Text('Anade tu primer lugar'))
                           : ListView.separated(
                               itemCount: _misLugares.length,
                               separatorBuilder: (context, index) {

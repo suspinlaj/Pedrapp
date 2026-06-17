@@ -82,7 +82,11 @@ flutter:
   fonts:
     - family: Titulo
       fonts:
-        - asset: assets/fonts/titulo.ttf # ¡Aquí también!
+        - asset: assets/fonts/titulo.ttf
+
+    - family: Subtitulo
+      fonts:
+        - asset: assets/fonts/subtitulo.ttf
   #         style: italic
   #   - family: Trajan Pro
   #     fonts:
