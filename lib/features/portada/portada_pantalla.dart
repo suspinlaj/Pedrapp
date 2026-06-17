@@ -1,7 +1,8 @@
 import 'dart:async'; 
 import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
-import 'package:pedrapp/core/frases.dart'; 
+import 'package:pedrapp/core/frases.dart';
+import 'package:pedrapp/features/mapa/mapa_pantalla.dart'; 
 
 class PortadaPantalla extends StatefulWidget {
   const PortadaPantalla({super.key});
@@ -107,8 +108,10 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
                   // --- BOTÓN ENTRAR ---
                   TextButton(
                     onPressed: () {
-                      print("Botón Entrar pulsado"); 
-                    },
+                      Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const MapaPantalla()),
+                          );                    },
                     style: TextButton.styleFrom(
                       splashFactory: NoSplash.splashFactory, 
                     ),
