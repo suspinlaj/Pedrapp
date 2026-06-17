@@ -3,10 +3,10 @@ import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/lugar.dart';
 
 class ListaLugares extends StatelessWidget {
-  final List<Lugar> lugares;
-  final Function(Lugar) onLugarTap;
-  final Function(int) onDeleteTap;
-  final Function(double, double) onNavigateTap;
+  final List<Lugar> lugares; // Lista de datos a mostrar
+  final Function(Lugar) onLugarTap; // Acción al tocar un lugar
+  final Function(int) onDeleteTap; // Acción al borrar un lugar
+  final Function(double, double) onNavigateTap; // Acción al navegar (Waze)
 
   const ListaLugares({
     super.key, 
@@ -18,51 +18,84 @@ class ListaLugares extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 10.0),
-          child: Text('Lugares Guardados', style: TextStyle(color: Colores.gris, fontFamily: 'Subtitulo', fontSize: 37, fontWeight: FontWeight.bold)),
-        ),
-        const Divider(color: Colores.rojo, thickness: 2.5),
-        Expanded(
-          child: lugares.isEmpty
-              ? const Center(child: Text('Añade tu primer lugar'))
-              : ListView.separated(
-                  itemCount: lugares.length,
-                  separatorBuilder: (_, __) => const Divider(color: Colores.rojo, indent: 40.0, endIndent: 40.0, height: 1.0, thickness: 1.5),
-                  itemBuilder: (context, index) {
-                    final lugar = lugares[index];
-                    return InkWell(
-                      onTap: () => onLugarTap(lugar),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.location_on, color: Colores.rojo, size: 24),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(lugar.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Para decidir tamaños según el espacio real
+        final bool isSmall = constraints.maxWidth < 250;
+        
+        // Define escalas de texto e iconos basados en el espacio detectado
+        final double titleSize = isSmall ? 28 : 37;
+        final double textSize = isSmall ? 14 : 16;
+        final double iconSize = isSmall ? 20 : 22;
+
+        return Column(
+          children: [
+            // --- TITULO ---
+            Padding(
+              padding: const EdgeInsets.only(top: 10.0),
+              child: Text('Lugares', 
+                style: TextStyle(
+                  color: Colores.gris, 
+                  fontFamily: 'Subtitulo', 
+                  fontSize: titleSize, 
+                  fontWeight: FontWeight.bold
+                )
+              ),
+            ),
+            // --- LINEA DIVISORIA ---
+            const Divider(color: Colores.rojo, thickness: 2.5),
+            // Área de la lista (Expanded permite ocupar el resto del espacio)
+            Expanded(
+              child: lugares.isEmpty
+                  ? const Center(child: Text('No hay lugares guardados bobo')) // Mensaje si la lista está vacía
+                  : ListView.separated(
+                      itemCount: lugares.length,
+                      // Separador entre cada lugar de la lista
+                      separatorBuilder: (_, __) => const Divider(color: Colores.rojo, indent: 20, endIndent: 20),
+                      itemBuilder: (context, index) {
+                        final lugar = lugares[index];
+                        return InkWell(
+                          onTap: () => onLugarTap(lugar), // Clic en el elemento para centrar mapa
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            child: Row(
                               children: [
-                                InkWell(
-                                  onTap: () => onNavigateTap(lugar.latitud, lugar.longitud),
-                                  child: const Padding(padding: EdgeInsets.all(6.0), child: Icon(Icons.navigation, color: Colores.gris, size: 22)),
+                                // --- ICONO DE UBICACIÓN ---
+                                const Icon(Icons.location_on, color: Colores.rojo, size: 24),
+                                const SizedBox(width: 5),
+                                // --- NOMBRE DEL LUGAR ---
+                                Expanded(
+                                  child: Text(
+                                    lugar.nombre, 
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: textSize),
+                                  )
                                 ),
-                                InkWell(
-                                  onTap: () => onDeleteTap(index),
-                                  child: const Padding(padding: EdgeInsets.all(6.0), child: Icon(Icons.delete, color: Colors.red, size: 22)),
+                                // --- FILA DE BOTONES ---
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Botón de navegación (Waze)
+                                    InkWell(
+                                      onTap: () => onNavigateTap(lugar.latitud, lugar.longitud),
+                                      child: Padding(padding: const EdgeInsets.all(4.0), child: Icon(Icons.navigation, color: Colores.gris, size: iconSize)),
+                                    ),
+                                    InkWell(
+                                    // Botón de borrar lugar
+                                      onTap: () => onDeleteTap(index),
+                                      child: Padding(padding: const EdgeInsets.all(4.0), child: Icon(Icons.delete, color: Colors.red, size: iconSize)),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-      ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      }
     );
   }
 }

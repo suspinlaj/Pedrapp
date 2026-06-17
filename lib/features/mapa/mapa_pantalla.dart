@@ -4,9 +4,10 @@ import 'package:latlong2/latlong.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/lugar.dart';
 import 'package:pedrapp/servicios/lugar_service.dart';
-import 'package:pedrapp/widgets/dialog_buscar_direccion.dart';
-import 'package:pedrapp/widgets/dialog_lugar_exacto.dart';
+import 'package:pedrapp/widgets/dialog_eliminar.dart';
 import 'package:pedrapp/widgets/lista_lugares.dart';
+import 'package:pedrapp/widgets/dialog_lugar_exacto.dart';
+import 'package:pedrapp/widgets/dialog_buscar_direccion.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MapaPantalla extends StatefulWidget {
@@ -17,21 +18,23 @@ class MapaPantalla extends StatefulWidget {
 }
 
 class _MapaPantallaState extends State<MapaPantalla> {
-  List<Lugar> _misLugares = [];
-  final MapController _mapController = MapController();
-  bool _mostrarLista = false;
+  List<Lugar> _misLugares = []; // Lista de lugares guardados
+  final MapController _mapController = MapController(); // Controlar el zoom y movimiento del mapa
+  bool _mostrarLista = false; // Visibilidad del menú lateral
 
   @override
   void initState() {
     super.initState();
-    _recargarLista();
+    _recargarLista(); // Carga los lugares al iniciar la pantalla
   }
 
+  // Obtiene los lugares desde el servicio y actualiza la vista
   Future<void> _recargarLista() async {
     final lista = await LugarService.obtener();
     setState(() => _misLugares = lista);
   }
 
+  // Abre la app de Waze con las coordenadas del lugar
   Future<void> _abrirWaze(double lat, double lng) async {
     final url = Uri.parse('https://waze.com/ul?ll=$lat,$lng&navigate=yes');
     if (await canLaunchUrl(url)) {
@@ -41,7 +44,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
     }
   }
 
-  // --- LLAMADA AL DIÁLOGO REUTILIZABLE (Punto Exacto) ---
+  // Guardar punto exacto clicado en el mapa
   void _mostrarDialogoAgregarPunto(LatLng puntoClicado) {
     showDialog(
       context: context,
@@ -56,7 +59,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
     );
   }
 
-  // --- LLAMADA AL DIÁLOGO REUTILIZABLE (Búsqueda) ---
+  // Dialog de búsqueda por dirección
   void _mostrarDialogoBuscarDireccion() {
     showDialog(
       context: context,
@@ -71,23 +74,45 @@ class _MapaPantallaState extends State<MapaPantalla> {
     );
   }
 
+  // Dialog de confirmación antes de borrar un lugar
+  void _mostrarDialogoEliminar(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => DialogEliminar(
+        nombreLugar: _misLugares[index].nombre,
+        onConfirm: () async {
+          setState(() => _misLugares.removeAt(index));
+          await LugarService.guardar(_misLugares);
+          _recargarLista();
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Cálculos para que el diseño se adapte al tamaño de pantalla
     final paddingAbajo = MediaQuery.of(context).padding.bottom;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double anchoBarra = screenWidth > 450 ? 350.0 : screenWidth * 0.65; // Define el ancho lateral responsivo
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mapa', style: TextStyle(fontFamily: 'Titulo', fontSize: 24)), 
         backgroundColor: Colores.rojo, 
         foregroundColor: Colors.white
       ),
+      // --- BOTÓN AÑADIR LUGAR ---
       floatingActionButton: FloatingActionButton(
         heroTag: 'btn_anadir', 
         backgroundColor: Colores.rojo, foregroundColor: Colors.white,
         onPressed: _mostrarDialogoBuscarDireccion,
         child: const Icon(Icons.add, size: 30),
       ),
-      body: Stack(
+      body: Stack( 
         children: [
+          // Capa 1: El mapa interactivo
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -108,14 +133,28 @@ class _MapaPantallaState extends State<MapaPantalla> {
               ),
             ],
           ),
+
+          // Cerrar menú si se toca fuera
+          if (_mostrarLista)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque, 
+                onTap: () => setState(() => _mostrarLista = false),
+                child: Container(color: Colors.transparent), 
+              ),
+            ),
+          
+          //  --- MENÚ LATERAL ---
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            left: _mostrarLista ? 0 : -300,
-            top: 0, bottom: 0, width: 280, 
+            left: _mostrarLista ? 0 : -anchoBarra,
+            top: 0, 
+            bottom: 0, 
+            width: anchoBarra,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.8), 
+                color: Colors.white.withValues(alpha: 0.9), 
                 border: const Border(right: BorderSide(color: Colores.rojo, width: 3.0)),
                 boxShadow: [if (_mostrarLista) const BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 2)]
               ),
@@ -123,12 +162,14 @@ class _MapaPantallaState extends State<MapaPantalla> {
                 child: ListaLugares(
                   lugares: _misLugares,
                   onLugarTap: (l) { setState(() => _mostrarLista = false); _mapController.move(LatLng(l.latitud, l.longitud), 15.0); },
-                  onDeleteTap: (i) async { setState(() => _misLugares.removeAt(i)); await LugarService.guardar(_misLugares); },
+                  onDeleteTap: (i) => _mostrarDialogoEliminar(i),
                   onNavigateTap: (lat, lng) => _abrirWaze(lat, lng),
                 ),
               ),
             ),
           ),
+          
+          // --- BOTÓN LISTA LUGARES ---
           Positioned(
             left: 16, bottom: paddingAbajo + 16, 
             child: FloatingActionButton(
