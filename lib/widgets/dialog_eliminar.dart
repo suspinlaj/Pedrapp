@@ -14,7 +14,7 @@ class DialogEliminar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DialogGeneral(
-      title: 'Eliminar Lugar',
+      title: 'ELiminar Lugar',
       saveText: 'Eliminar',
       onSave: onConfirm,
       content: Text.rich(

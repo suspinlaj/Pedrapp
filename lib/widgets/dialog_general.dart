@@ -19,21 +19,22 @@ class DialogGeneral extends StatelessWidget {
   Widget build(BuildContext context) {
     // Ajusta los tamaños de fuente dinámicamente según el ancho de pantalla
     final screenWidth = MediaQuery.of(context).size.width;
-    final titleSize = screenWidth < 350 ? 24.0 : 35.0;
+    final titleSize = screenWidth < 350 ? 24.0 : 30.0;
     final btnSize = screenWidth < 350 ? 18.0 : 25.0;
 
     return AlertDialog(
       backgroundColor: Colors.white, 
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Colores.rojo, width: 3),
+        side: const BorderSide(color: Colores.gris, width: 4),
       ),
       // --- TITULO --- 
       title: Text(title, style: TextStyle(
         color: Colores.rojo, 
         fontWeight: FontWeight.bold,
         fontSize: titleSize,
-        fontFamily: 'Subtitulo')),
+        fontFamily: 'Titulo',
+        letterSpacing: 2.0,)),
       content: content,
       actions: [
         // --- BOTÓN CANCELAR ---
