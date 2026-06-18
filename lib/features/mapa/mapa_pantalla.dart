@@ -169,9 +169,6 @@ class _MapaPantallaState extends State<MapaPantalla> {
                         child: Text(
                           l.nombre,
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black),
-                          textAlign: TextAlign.center, 
-                          maxLines: 2, // Permite hasta 2 líneas
-                          overflow: TextOverflow.ellipsis, // Si pasa de 2 líneas pone "..."
                         ),
                       ),
                       // El icono original
