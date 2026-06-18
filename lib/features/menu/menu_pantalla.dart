@@ -128,22 +128,21 @@ final isLandscape =
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15), 
         decoration: BoxDecoration(
           color: colorFondo,
-          borderRadius: BorderRadius.circular(12), // Bordes redondeados
-          border: Border.all(color: Colores.gris, width: 3), // Borde grueso gris
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colores.gris, width: 3),
         ),
-        // Coloca el icono y el texto en línea horizontal
         child: Row(
           children: [
-            Icon(icono, size: 35, color: colorTexto),
+            Icon(icono, size: 30, color: colorTexto), 
             const SizedBox(width: 20),
             Expanded(
               child: Text(
                 titulo,
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 20, 
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.5,
                   color: colorTexto,

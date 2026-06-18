@@ -151,7 +151,10 @@ class _MapaPantallaState extends State<MapaPantalla> {
             options: MapOptions(
               initialCenter: const LatLng(40.416775, -3.703790), 
               initialZoom: 12.0, 
-              onLongPress: (_, p) => _mostrarDialogoAgregarPunto(p)
+              onLongPress: (_, p) => _mostrarDialogoAgregarPunto(p),
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              ),
             ),
             children: [
               TileLayer(
