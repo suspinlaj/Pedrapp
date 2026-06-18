@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/core/frases.dart';
-import 'package:pedrapp/features/mapa/mapa_pantalla.dart'; 
+import 'package:pedrapp/features/menu/menu_pantalla.dart'; 
 
 class PortadaPantalla extends StatefulWidget {
   const PortadaPantalla({super.key});
@@ -110,7 +110,7 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
                     onPressed: () {
                       Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const MapaPantalla()),
+                            MaterialPageRoute(builder: (context) => const MenuPantalla()),
                           );                    },
                     style: TextButton.styleFrom(
                       splashFactory: NoSplash.splashFactory, 
