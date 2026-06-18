@@ -51,7 +51,7 @@ class ListaLugares extends StatelessWidget {
                   : ListView.separated(
                       itemCount: lugares.length,
                       // Separador entre cada lugar de la lista
-                      separatorBuilder: (_, __) => const Divider(color: Colores.rojo, indent: 20, endIndent: 20),
+                      separatorBuilder: (_, _) => const Divider(color: Colores.rojo, indent: 20, endIndent: 20),
                       itemBuilder: (context, index) {
                         final lugar = lugares[index];
                         return InkWell(
