@@ -22,7 +22,7 @@ class _DialogLugarExactoState extends State<DialogLugarExacto> {
   Widget build(BuildContext context) {
     return DialogGeneral(
       // --- TIUTLO ---
-      title: 'Guardar este lugar',
+      title: 'Guardar Lugar',
       onSave: () {
         // Valida que no esté vacío antes de crear el objeto Lugar
         if (controller.text.isNotEmpty) {

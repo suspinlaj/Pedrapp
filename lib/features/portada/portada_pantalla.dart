@@ -35,15 +35,16 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
   Widget build(BuildContext context) {
     // Saber las medidas exactas de la pantalla del móvil
     final altoPantalla = MediaQuery.of(context).size.height;
+    final isLandscape =
+    MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
       body: Container(
         height: altoPantalla, // Asegurar que el fondo ocupa todo el alto
-        decoration: const BoxDecoration(
-          // --- IMAGEN FONDO ---
+        decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/fondo_portada.png'), 
-            fit: BoxFit.fill, 
+            image: const AssetImage('assets/images/fondo_portada.png'),
+            fit: isLandscape ? BoxFit.contain : BoxFit.fill,
           ),
         ),
         child: SafeArea(

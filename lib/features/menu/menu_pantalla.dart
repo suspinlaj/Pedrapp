@@ -7,6 +7,9 @@ class MenuPantalla extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+final isLandscape =
+    MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -15,7 +18,7 @@ class MenuPantalla extends StatelessWidget {
           Positioned.fill(
             child: Image.asset(
               'assets/images/fondo_portada.png',
-              fit: BoxFit.fill, 
+              fit: isLandscape ? BoxFit.contain : BoxFit.fill,
             ),
           ),
 

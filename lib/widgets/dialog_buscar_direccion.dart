@@ -50,7 +50,7 @@ class _DialogBuscarDireccionState extends State<DialogBuscarDireccion> {
     final maxHeight = MediaQuery.of(context).size.height * 0.6;
 
     return DialogGeneral(
-      title: 'Buscar lugar',
+      title: 'Buscar Lugar',
       onSave: _guardarLugar,
       content: Container(
         width: double.maxFinite,
