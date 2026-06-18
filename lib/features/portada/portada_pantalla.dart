@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/core/frases.dart';
-import 'package:pedrapp/features/menu/menu_pantalla.dart'; 
+import 'package:pedrapp/features/menu/menu_pantalla.dart';
+import 'package:pedrapp/widgets/dialog_recuperar_datos.dart'; 
 
 class PortadaPantalla extends StatefulWidget {
   const PortadaPantalla({super.key});
@@ -42,6 +43,7 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
       body: Container(
         height: altoPantalla, // Asegurar que el fondo ocupa todo el alto
         decoration: BoxDecoration(
+          color: Colors.white,
           image: DecorationImage(
             image: const AssetImage('assets/images/fondo_portada.png'),
             fit: isLandscape ? BoxFit.contain : BoxFit.fill,
@@ -54,7 +56,7 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
                 mainAxisAlignment: MainAxisAlignment.center, 
                 children: [
                   
-                  SizedBox(height: altoPantalla * 0.12), 
+                  SizedBox(height: altoPantalla * 0.14), 
                   
                   RichText(
                     text: const TextSpan(
@@ -127,7 +129,27 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
                     ),
                   ),
 
-                  SizedBox(height: altoPantalla * 0.05), 
+                  SizedBox(height: altoPantalla * 0.08), 
+
+                  // --- COPIA DE SEGURIDAD  ---
+                  TextButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const DialogRecuperarDatos(),
+                      );
+                    },
+                    child: const Text(
+                      'Copia de seguridad',
+                      style: TextStyle(
+                        color: Colores.rojo,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

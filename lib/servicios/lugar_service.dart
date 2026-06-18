@@ -1,46 +1,51 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import 'package:pedrapp/modelos/lugar.dart';
 
 class LugarService {
-  // Guarda la lista completa en la nube (Firestore)
-  static Future<void> guardar(List<Lugar> lugares) async {
-    // Obtener ID del usuario 
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return; // Por si acaso no ha cargado aún
+  
+  // Función interna para obtener el ID privado de este dispositivo
+  static Future<String> getDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? deviceId = prefs.getString('my_unique_device_id');
+    
+    // Si no existe, creamos uno nuevo (es la primera vez)
+    if (deviceId == null) {
+      deviceId = const Uuid().v4();
+      await prefs.setString('my_unique_device_id', deviceId);
+    }
+    return deviceId;
+  }
 
-    // Convertir lista de objetos a un formato que Firebase entienda
+  static Future<void> setDeviceId(String newId) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('my_unique_device_id', newId);
+}
+
+  static Future<void> guardar(List<Lugar> lugares) async {
+    final id = await getDeviceId(); // Obtenemos el ID privado
     final listaTransformada = lugares.map((l) => l.toJson()).toList();
 
-    // Guardar lista dentro de una colección llamada 'usuarios'
-    // Cada móvil tendrá su propio documento usando su ID único (user.uid)
+    // Guardamos en la colección 'usuarios' pero en el documento de este ID
     await FirebaseFirestore.instance
         .collection('usuarios')
-        .doc(user.uid)
+        .doc(id) // <--- Aquí está la clave: cada móvil tiene su propio documento
         .set({'lugares_guardados': listaTransformada});
   }
 
-  // Obtener la lista completa desde la nube (Firestore)
   static Future<List<Lugar>> obtener() async {
-    // Obtener el ID del usuario
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return [];
+    final id = await getDeviceId(); // Obtenemos el ID privado
 
-    // Buscar su documento exacto a la bbdd y obtenerlo
     final snapshot = await FirebaseFirestore.instance
         .collection('usuarios')
-        .doc(user.uid)
+        .doc(id)
         .get();
 
-    // Si existe y tiene la lista guardada, sacarla
     if (snapshot.exists && snapshot.data()!.containsKey('lugares_guardados')) {
       final List<dynamic> listaData = snapshot.data()!['lugares_guardados'];
-      
-      // Volver a convertir datos en clase Lugar
       return listaData.map((item) => Lugar.fromJson(item)).toList();
     }
-    
-    // Devolvemos lista vacía si no hay nada guardado
     return [];
   }
 }
