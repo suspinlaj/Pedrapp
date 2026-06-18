@@ -151,7 +151,33 @@ class _MapaPantallaState extends State<MapaPantalla> {
               MarkerLayer(
                 markers: _misLugares.map((l) => Marker(
                   point: LatLng(l.latitud, l.longitud), 
-                  child: const Icon(Icons.location_on, color: Colores.rojo, size: 45)
+                  width: 150, // Aumentado para que el texto largo respire
+                  height: 100, // Aumentado para permitir dos líneas sin desbordar
+                  alignment: Alignment.bottomCenter, // Asegura que la punta del pin indique el lugar exacto
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end, // Empuja todo hacia abajo
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // --- ETIQUETA DE TEXTO AÑADIDA ---
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.85), // Fondo semitransparente
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colores.rojo, width: 1), // Bordecito para que destaque
+                        ),
+                        child: Text(
+                          l.nombre,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black),
+                          textAlign: TextAlign.center, 
+                          maxLines: 2, // Permite hasta 2 líneas
+                          overflow: TextOverflow.ellipsis, // Si pasa de 2 líneas pone "..."
+                        ),
+                      ),
+                      // El icono original
+                      const Icon(Icons.location_on, color: Colores.rojo, size: 45)
+                    ],
+                  ),
                 )).toList()
               ),
             ],

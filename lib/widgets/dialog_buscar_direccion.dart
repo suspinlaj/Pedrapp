@@ -33,6 +33,7 @@ class _DialogBuscarDireccionState extends State<DialogBuscarDireccion> {
     if (nombreController.text.isNotEmpty && direccionController.text.isNotEmpty) {
       final nuevo = Lugar(
         nombre: nombreController.text,
+        direccion: direccionController.text, 
         latitud: widget.centroMapa.latitude,
         longitud: widget.centroMapa.longitude,
       );
@@ -124,6 +125,7 @@ class _DialogBuscarDireccionState extends State<DialogBuscarDireccion> {
                     }
                     final nuevo = Lugar(
                       nombre: nombreController.text,
+                      direccion: sugerencias[index]['display_name'], 
                       latitud: double.parse(sugerencias[index]['lat']),
                       longitud: double.parse(sugerencias[index]['lon']),
                     );

@@ -51,7 +51,7 @@ class ListaLugares extends StatelessWidget {
                   : ListView.separated(
                       itemCount: lugares.length,
                       // Separador entre cada lugar de la lista
-                      separatorBuilder: (_, __) => const Divider(color: Colores.rojo, indent: 20, endIndent: 20),
+                      separatorBuilder: (_, _) => const Divider(color: Colores.rojo, indent: 20, endIndent: 20),
                       itemBuilder: (context, index) {
                         final lugar = lugares[index];
                         return InkWell(
@@ -63,11 +63,22 @@ class ListaLugares extends StatelessWidget {
                                 // --- ICONO DE UBICACIÓN ---
                                 const Icon(Icons.location_on, color: Colores.rojo, size: 24),
                                 const SizedBox(width: 5),
-                                // --- NOMBRE DEL LUGAR ---
+                                // --- NOMBRE Y DIRECCIÓN DEL LUGAR ---
                                 Expanded(
-                                  child: Text(
-                                    lugar.nombre, 
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: textSize),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        lugar.nombre, 
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: textSize),
+                                      ),
+                                      // Añadimos la dirección debajo en gris clarito
+                                      Text(
+                                        lugar.direccion, 
+                                        style: TextStyle(color: Colors.grey.shade600, fontSize: textSize - 2),
+                                      ),
+                                    ],
                                   )
                                 ),
                                 // --- FILA DE BOTONES ---

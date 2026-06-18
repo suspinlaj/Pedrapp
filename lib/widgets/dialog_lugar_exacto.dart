@@ -26,8 +26,12 @@ class _DialogLugarExactoState extends State<DialogLugarExacto> {
       onSave: () {
         // Valida que no esté vacío antes de crear el objeto Lugar
         if (controller.text.isNotEmpty) {
-          widget.onGuardar(Lugar(nombre: controller.text, latitud: widget.punto.latitude, longitud: widget.punto.longitude));
-          Navigator.pop(context); // Cierra el diálogo tras guardar
+          widget.onGuardar(Lugar(
+            nombre: controller.text, 
+            direccion: 'Punto seleccionado', 
+            latitud: widget.punto.latitude, 
+            longitud: widget.punto.longitude,
+          ));          Navigator.pop(context); // Cierra el diálogo tras guardar
         } else {
           setState(() => error = "¿Y si escribes un nombre primero qué tal?"); // Muestra aviso si está vacío
         }
