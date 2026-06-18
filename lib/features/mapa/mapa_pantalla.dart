@@ -30,32 +30,32 @@ class _MapaPantallaState extends State<MapaPantalla> {
 
   // Obtiene los lugares desde el servicio y actualiza la vista
   Future<void> _recargarLista() async {
-  final lista = await LugarService.obtener();
-  setState(() => _misLugares = lista);
+    final lista = await LugarService.obtener();
+    setState(() => _misLugares = lista);
 
-  if (lista.isNotEmpty) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Si solo hay un punto, movemos la cámara manualmente
-      if (lista.length == 1) {
-        final punto = LatLng(lista.first.latitud, lista.first.longitud);
-        _mapController.move(punto, 13.0); // Zoom 
-      } 
-      // Si hay varios, calculamos el área (bounds) y encuadramos
-      else {
-        final bounds = LatLngBounds.fromPoints(
-          lista.map((l) => LatLng(l.latitud, l.longitud)).toList()
-        );
-        
-        _mapController.fitCamera(
-          CameraFit.bounds(
-            bounds: bounds,
-            padding: const EdgeInsets.all(50), 
-          ),
-        );
-      }
-    });
+    if (lista.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Si solo hay un punto, mover la cámara manualmente
+        if (lista.length == 1) {
+          final punto = LatLng(lista.first.latitud, lista.first.longitud);
+          _mapController.move(punto, 13.0); // Zoom 
+        } 
+        // Si hay varios, calcular el área) y encuadramos
+        else {
+          final bounds = LatLngBounds.fromPoints(
+            lista.map((l) => LatLng(l.latitud, l.longitud)).toList()
+          );
+          
+          _mapController.fitCamera(
+            CameraFit.bounds(
+              bounds: bounds,
+              padding: const EdgeInsets.all(50), 
+            ),
+          );
+        }
+      });
+    }
   }
-}
 
   // Abre la app de Waze con las coordenadas del lugar
   Future<void> _abrirWaze(double lat, double lng) async {
@@ -122,20 +122,30 @@ class _MapaPantallaState extends State<MapaPantalla> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mapa', style: TextStyle(fontFamily: 'Titulo', fontSize: 24)), 
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Padding(
+          padding: EdgeInsets.only(top: 5.0), 
+          // TITULO
+          child: Text(
+            'Mapa', 
+            style: TextStyle(
+              fontFamily: 'Titulo', 
+              fontSize: 28, 
+              color: Colors.white,
+              letterSpacing: 1.5
+            )
+          ),
+        ), 
         backgroundColor: Colores.rojo, 
-        foregroundColor: Colors.white
-      ),
-      // --- BOTÓN AÑADIR LUGAR ---
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'btn_anadir', 
-        backgroundColor: Colores.rojo, foregroundColor: Colors.white,
-        onPressed: _mostrarDialogoBuscarDireccion,
-        child: const Icon(Icons.add, size: 30),
+        elevation: 0,
+        shape: const Border(bottom: BorderSide(color: Colores.gris, width: 3)), 
       ),
       body: Stack( 
         children: [
-          // Capa 1: El mapa interactivo
+          // MAPA
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -151,27 +161,31 @@ class _MapaPantallaState extends State<MapaPantalla> {
               MarkerLayer(
                 markers: _misLugares.map((l) => Marker(
                   point: LatLng(l.latitud, l.longitud), 
-                  width: 150, // Aumentado para que el texto largo respire
-                  height: 100, // Aumentado para permitir dos líneas sin desbordar
-                  alignment: Alignment.bottomCenter, // Asegura que la punta del pin indique el lugar exacto
+                  width: 150, 
+                  height: 100, 
+                  alignment: Alignment.bottomCenter, 
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end, // Empuja todo hacia abajo
+                    mainAxisAlignment: MainAxisAlignment.end, 
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // --- ETIQUETA DE TEXTO AÑADIDA ---
+                      // --- ETIQUETA DE TEXTO LUGAR ---
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.85), // Fondo semitransparente
+                          color: Colors.white.withValues(alpha: 0.85), 
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colores.rojo, width: 1), // Bordecito para que destaque
+                          border: Border.all(color: Colores.rojo, width: 2), 
                         ),
                         child: Text(
                           l.nombre,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black),
+                          style: const TextStyle(
+                            fontSize: 12, 
+                            fontWeight: FontWeight.w900, 
+                            color: Colors.black 
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                      // El icono original
                       const Icon(Icons.location_on, color: Colores.rojo, size: 45)
                     ],
                   ),
@@ -186,7 +200,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque, 
                 onTap: () => setState(() => _mostrarLista = false),
-                child: Container(color: Colors.transparent), 
+                child: Container(color: Colors.black54), // oscurece el mapa
               ),
             ),
           
@@ -200,9 +214,8 @@ class _MapaPantallaState extends State<MapaPantalla> {
             width: anchoBarra,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9), 
-                border: const Border(right: BorderSide(color: Colores.rojo, width: 3.0)),
-                boxShadow: [if (_mostrarLista) const BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 2)]
+                color: Colors.white,
+                border: const Border(right: BorderSide(color: Colores.rojo, width: 3.0)), // Borde derecho ROJO 
               ),
               child: SafeArea(
                 child: ListaLugares(
@@ -215,13 +228,37 @@ class _MapaPantallaState extends State<MapaPantalla> {
             ),
           ),
           
-          // --- BOTÓN LISTA LUGARES ---
+          // --- BOTÓN LISTA LUGARES  ---
           Positioned(
             left: 16, bottom: paddingAbajo + 16, 
-            child: FloatingActionButton(
-              heroTag: 'btn_lista', backgroundColor: Colores.rojo, foregroundColor: Colors.white,
-              onPressed: () => setState(() => _mostrarLista = !_mostrarLista),
-              child: Icon(_mostrarLista ? Icons.close : Icons.list, size: 30),
+            child: GestureDetector(
+              onTap: () => setState(() => _mostrarLista = !_mostrarLista),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colores.rojo, 
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colores.gris, width: 3), 
+                ),
+                child: Icon(_mostrarLista ? Icons.close : Icons.list, color: Colors.white, size: 30), // Icono blanco
+              ),
+            ),
+          ),
+
+          // --- BOTÓN AÑADIR LUGAR ---
+          Positioned(
+            right: 16, bottom: paddingAbajo + 16, 
+            child: GestureDetector(
+              onTap: _mostrarDialogoBuscarDireccion,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colores.rojo, 
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colores.gris, width: 3), 
+                ),
+                child: const Icon(Icons.add, color: Colors.white, size: 30), 
+              ),
             ),
           ),
         ],
