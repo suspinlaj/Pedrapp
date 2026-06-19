@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/marca.dart';
 import 'package:pedrapp/servicios/marcas_service.dart';
+import 'package:pedrapp/widgets/dialog_eliminar.dart';
 import 'package:pedrapp/widgets/dialog_general.dart';
 
 class DetalleMarcaPantalla extends StatefulWidget {
@@ -256,29 +257,27 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
   }
 
   // --- DIÁLOGO DE BORRAR ---
+  // --- DIÁLOGO DE BORRAR ---
   void _confirmarBorrado(int indexReal) {
+    // 1. Obtenemos el registro exacto que el usuario quiere borrar
+    final registro = widget.categoria.historial[indexReal];
+    
+    // 2. Lo convertimos a formato texto (Ej: "01:05.0")
+    final tiempoFormateado = CategoriaMarca.formatearTiempo(registro.segundosTotales);
+
     showDialog(
       context: context,
-      builder: (context) => DialogGeneral(
-        title: 'Eliminar Marca',
-        saveText: 'Borrar',
-        colorTema: widget.colorFondo, 
-        onSave: () {
+      builder: (context) => DialogEliminar(
+        titulo: 'Eliminar Marca',
+        nombreItem: tiempoFormateado, // <-- Aquí le pasamos la marca en lugar del nombre
+        finalMensaje: 'de esta categoría?\n\nEsto no se puede deshacer eh.', // Ajustamos el texto final
+        onConfirm: () {
           setState(() {
             widget.categoria.historial.removeAt(indexReal);
           });
           MarcasService().guardarCategoria(widget.categoria);
           Navigator.pop(context);
         },
-        content: const Text.rich(
-          TextSpan(
-            style: TextStyle(fontSize: 16, color: Colors.black87), 
-            children: [
-              TextSpan(text: '¿Seguro que quieres borrar esta marca? Piénsatelo bien anda, que tú eres muy torpe '), 
-            ],
-          ),
-          textAlign: TextAlign.start, 
-        ),
       ),
     );
   }
@@ -292,7 +291,13 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(cat.nombre, style: const TextStyle(fontFamily: 'Titulo', color: Colors.white)),
+        titleSpacing: 0,        // <-- Añade esta línea
+        centerTitle: false,
+        title: Text(
+          cat.nombre, 
+          style: const TextStyle(
+            fontFamily: 'Titulo', 
+            color: Colors.white)),
         backgroundColor: widget.colorFondo,
         iconTheme: const IconThemeData(color: Colors.white),
       ),

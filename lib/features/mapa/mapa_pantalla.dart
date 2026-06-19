@@ -102,7 +102,9 @@ class _MapaPantallaState extends State<MapaPantalla> {
     showDialog(
       context: context,
       builder: (context) => DialogEliminar(
-        nombreLugar: _misLugares[index].nombre,
+        titulo: 'Eliminar Lugar', // <-- El título del diálogo
+        nombreItem: _misLugares[index].nombre, // <-- El nombre que va en negrita
+        finalMensaje: 'de tu mapa?', // <-- El texto que va después del nombre
         onConfirm: () async {
           setState(() => _misLugares.removeAt(index));
           await LugarService.guardar(_misLugares);

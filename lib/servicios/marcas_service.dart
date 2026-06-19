@@ -50,7 +50,7 @@ class MarcasService {
         
         IconData iconoOriginal = plantillaInicial
             .firstWhere((element) => element.id == datos['id'], 
-                       orElse: () => CategoriaMarca(id: 'err', nombre: '', icono: Icons.star, objetivo: 0.0))
+                      orElse: () => CategoriaMarca(id: 'err', nombre: '', icono: Icons.star, objetivo: 0.0))
             .icono;
 
         listaCargada.add(CategoriaMarca.fromFirebase(datos, iconoOriginal));

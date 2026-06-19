@@ -74,6 +74,8 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
       length: 2, 
       child: Scaffold(
         appBar: AppBar(
+          titleSpacing: 0, // <--- Esto elimina el margen extra que Flutter añade a la izquierda
+          centerTitle: false,
           title: const Text('Marcas oposicion', style: TextStyle(fontFamily: 'Titulo', color: Colors.white)),
           backgroundColor: Colores.rojo,
           iconTheme: const IconThemeData(color: Colors.white),
@@ -127,7 +129,7 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
             // --- PESTAÑA 2: CUADRÍCULA DE CATEGORÍAS ---
             GridView.builder(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3, 
                 crossAxisSpacing: 10,
