@@ -44,7 +44,7 @@ class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
               // TEXTO CONFIRMACION DATOS RESTAURADOS
               const SnackBar(
                 content: Text(
-                  "Listooo! Reinicia la app para ver tus datos awa",
+                  "Reinicia la app para ver tus datos awa",
                   textAlign: TextAlign.center, 
                 ),
                 backgroundColor: Colores.rojo, 
