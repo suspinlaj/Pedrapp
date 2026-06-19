@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/marca.dart';
 import 'package:pedrapp/features/marcas/detalle_marca_pantalla.dart';
+import 'package:pedrapp/servicios/marcas_service.dart';
 
 class MarcasPantalla extends StatefulWidget {
   const MarcasPantalla({super.key});
@@ -11,17 +12,20 @@ class MarcasPantalla extends StatefulWidget {
 }
 
 class _MarcasPantallaState extends State<MarcasPantalla> {
-  // Las categorías con sus iconos asignados
+  final MarcasService _marcasServicio = MarcasService();
+  bool cargando = true;
+
+  // Esta lista ahora actúa como la "plantilla de fábrica" inicial
   List<CategoriaMarca> misCategorias = [
-    CategoriaMarca(nombre: "Natacion 50", icono: Icons.waves, objetivo: 30.0),
-    CategoriaMarca(nombre: "Natacion 100", icono: Icons.pool, objetivo: 65.0),
-    CategoriaMarca(nombre: "Natacion buceo", icono: Icons.scuba_diving, objetivo: 25.0),
-    CategoriaMarca(nombre: "Pista 200", icono: Icons.directions_run, objetivo: 26.0),
-    CategoriaMarca(nombre: "Pista 1000", icono: Icons.directions_run, objetivo: 180.0),
-    CategoriaMarca(nombre: "Pista 1500", icono: Icons.directions_run, objetivo: 300.0),
-    CategoriaMarca(nombre: "Ritmo 5000", icono: Icons.timer, objetivo: 1200.0),
-    CategoriaMarca(nombre: "Ritmo 10000", icono: Icons.timer, objetivo: 2400.0),
-    CategoriaMarca(nombre: "Cuerda", icono: Icons.fitness_center, objetivo: 9.0),
+    CategoriaMarca(id: "natacion_50", nombre: "Natacion 50", icono: Icons.waves, objetivo: 30.0),
+    CategoriaMarca(id: "natacion_100", nombre: "Natacion 100", icono: Icons.pool, objetivo: 65.0),
+    CategoriaMarca(id: "natacion_buceo", nombre: "Natacion buceo", icono: Icons.scuba_diving, objetivo: 25.0),
+    CategoriaMarca(id: "pista_200", nombre: "Pista 200", icono: Icons.directions_run, objetivo: 26.0),
+    CategoriaMarca(id: "pista_1500", nombre: "Pista 1500", icono: Icons.directions_run, objetivo: 300.0),
+    CategoriaMarca(id: "pista_1000", nombre: "Pista 1000", icono: Icons.directions_run, objetivo: 180.0),
+    CategoriaMarca(id: "ritmo_5000", nombre: "Ritmo 5000", icono: Icons.timer, objetivo: 1200.0),
+    CategoriaMarca(id: "ritmo_10000", nombre: "Ritmo 10000", icono: Icons.timer, objetivo: 2400.0),
+    CategoriaMarca(id: "cuerda", nombre: "Cuerda", icono: Icons.fitness_center, objetivo: 9.0),
   ];
 
   final List<Color> paletaColores = [
@@ -31,7 +35,41 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _cargarDatosReales();
+  }
+
+  // Conectamos con Firebase al abrir la pantalla
+  void _cargarDatosReales() async {
+    var datosNube = await _marcasServicio.cargarCategorias(misCategorias);
+    
+    // --- AQUÍ ESTÁ LA CORRECCIÓN ---
+    // Creamos una lista nueva ordenada exactamente igual que nuestra plantilla 'misCategorias'
+    List<CategoriaMarca> listaOrdenada = [];
+    for (var plantilla in misCategorias) {
+      // Buscamos el elemento que viene de Firebase que tenga el mismo ID
+      var encontrado = datosNube.firstWhere(
+        (cat) => cat.id == plantilla.id, 
+        orElse: () => plantilla // Si no existe en Firebase, usamos la plantilla
+      );
+      listaOrdenada.add(encontrado);
+    }
+
+    setState(() {
+      misCategorias = listaOrdenada; // Ahora siempre estará en el mismo orden
+      cargando = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (cargando) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: Colores.rojo)),
+      );
+    }
+
     return DefaultTabController(
       length: 2, 
       child: Scaffold(
@@ -54,14 +92,13 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
           children: [
             // --- PESTAÑA 1: RESUMEN GENERAL ---
             ListView.separated(
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(16),
               itemCount: misCategorias.length,
               separatorBuilder: (context, index) => const Divider(color: Colores.rojo),
               itemBuilder: (context, index) {
                 final cat = misCategorias[index];
-                
                 final colorCategoria = paletaColores[index % paletaColores.length]; 
-                
                 final mejor = CategoriaMarca.formatearTiempo(cat.mejorMarca);
                 final objetivo = CategoriaMarca.formatearTiempo(cat.objetivo);
                 final estaLogrado = cat.progreso >= 1.0;
@@ -89,6 +126,7 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
 
             // --- PESTAÑA 2: CUADRÍCULA DE CATEGORÍAS ---
             GridView.builder(
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3, 
@@ -101,7 +139,6 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
                 final cat = misCategorias[index];
                 final colorBoton = paletaColores[index % paletaColores.length];
 
-                // --- SOLUCIÓN APLICADA AQUÍ ---
                 return Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(15),
@@ -110,14 +147,16 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
                   child: Material(
                     color: colorBoton,
                     borderRadius: BorderRadius.circular(15),
-                    clipBehavior: Clip.antiAlias, // <-- ESTA ES LA MAGIA QUE CORTA LO QUE SOBRA
+                    clipBehavior: Clip.antiAlias, 
                     child: InkWell(
                       onTap: () async {
+                        // Navegamos al detalle
                         await Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => DetalleMarcaPantalla(categoria: cat, colorFondo: colorBoton)),
                         );
-                        setState(() {}); 
+                        // Al volver del detalle, como allí se guardará en Firebase, volvemos a pedir los datos frescos
+                        _cargarDatosReales(); 
                       },
                       child: Center(
                         child: Padding(

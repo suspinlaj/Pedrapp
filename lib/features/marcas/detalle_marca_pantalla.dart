@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/marca.dart';
+import 'package:pedrapp/servicios/marcas_service.dart';
 import 'package:pedrapp/widgets/dialog_general.dart';
 
 class DetalleMarcaPantalla extends StatefulWidget {
@@ -43,6 +44,8 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
             setState(() {
               widget.categoria.objetivo = totalSegundos;
             });
+            // --- AÑADIDO: GUARDAR OBJETIVO EN FIREBASE ---
+            MarcasService().guardarCategoria(widget.categoria);
             Navigator.pop(context);
           }
         },
@@ -151,6 +154,8 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
                   }
                   widget.categoria.historial.sort((a, b) => a.fecha.compareTo(b.fecha));
                 });
+                // --- AÑADIDO: GUARDAR NUEVA MARCA EN FIREBASE ---
+                MarcasService().guardarCategoria(widget.categoria);
                 Navigator.pop(context);
               }
             },
@@ -262,13 +267,14 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
           setState(() {
             widget.categoria.historial.removeAt(indexReal);
           });
+          MarcasService().guardarCategoria(widget.categoria);
           Navigator.pop(context);
         },
-        content: Text.rich(
+        content: const Text.rich(
           TextSpan(
-            style: const TextStyle(fontSize: 16, color: Colors.black87), 
+            style: TextStyle(fontSize: 16, color: Colors.black87), 
             children: [
-              const TextSpan(text: '¿Seguro que quieres borrar esta marca? Piénsatelo bien anda, que tú eres muy torpe '), 
+              TextSpan(text: '¿Seguro que quieres borrar esta marca? Piénsatelo bien anda, que tú eres muy torpe '), 
             ],
           ),
           textAlign: TextAlign.start, 
@@ -348,7 +354,6 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
                     textAlign: TextAlign.center, style: TextStyle(color: Colores.gris, fontSize: 16)),
                   )
                 : ListView.builder(
-                    // --- ¡AQUÍ ESTÁ LA MAGIA QUE QUITA EL EFECTO CHICLE! ---
                     physics: const BouncingScrollPhysics(),
                     itemCount: cat.historial.length,
                     itemBuilder: (context, index) {

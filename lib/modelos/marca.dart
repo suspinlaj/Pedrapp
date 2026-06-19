@@ -8,50 +8,38 @@ class Registro {
 }
 
 class CategoriaMarca {
+  String id; // <-- Añadimos un ID único para Firebase
   String nombre;
   IconData icono;
   double objetivo;
   List<Registro> historial;
 
   CategoriaMarca({
+    required this.id, // <-- Lo pedimos aquí
     required this.nombre,
     required this.icono,
     required this.objetivo,
     List<Registro>? historial,
   }) : historial = historial ?? [];
 
-  // Busca el tiempo más bajo (el mejor)
+  // ... (Tus funciones de mejorMarca, peorMarca y progreso se quedan exactamente igual)
   double get mejorMarca {
     if (historial.isEmpty) return 0;
     return historial.map((e) => e.segundosTotales).reduce((a, b) => a < b ? a : b);
   }
 
-  // Busca el tiempo más alto (el peor/inicial)
   double get peorMarca {
     if (historial.isEmpty) return 0;
     return historial.map((e) => e.segundosTotales).reduce((a, b) => a > b ? a : b);
   }
 
-  // --- LÓGICA DE PROGRESO TOTALMENTE NUEVA ---
   double get progreso {
     if (historial.isEmpty) return 0.0; 
-
     double mejor = mejorMarca;
-
-    // 1. Si ya logró el objetivo, 100% de una.
     if (mejor <= objetivo) return 1.0; 
-
-    // 2. Establecemos el punto 0% de la barra (el "peor tiempo de referencia").
-    // Por ejemplo: si el objetivo es 60s, el 0% de la barra serán 90s.
     double peorReferencia = objetivo * 1.5; 
-    
-    // Si su peor marca real es AÚN MÁS LENTA que esa referencia, usamos su peor marca 
-    // real como 0%. Si no, usamos la referencia para que siempre haya color en la barra.
     double puntoDePartida = peorMarca > peorReferencia ? peorMarca : peorReferencia;
-    
-    // 3. Calculamos la fórmula en base a ese punto de partida
     double progresoCalculado = (puntoDePartida - mejor) / (puntoDePartida - objetivo);
-    
     return progresoCalculado.clamp(0.0, 1.0); 
   }
   
@@ -62,5 +50,40 @@ class CategoriaMarca {
     String minsStr = minutos.toString().padLeft(2, '0');
     String secsStr = segundos.toStringAsFixed(1).padLeft(4, '0'); 
     return "$minsStr:$secsStr";
+  }
+
+  // --- LAS DOS NUEVAS FUNCIONES PARA FIREBASE ---
+  
+  // 1. Convierte la categoría a un mapa para mandarlo a Firebase
+  Map<String, dynamic> toFirebase() {
+    return {
+      'id': id,
+      'nombre': nombre,
+      'objetivo': objetivo,
+      // Guardamos el historial como una lista de mapas
+      'historial': historial.map((r) => {
+        'fecha': r.fecha.toIso8601String(),
+        'segundosTotales': r.segundosTotales,
+      }).toList(),
+    };
+  }
+
+  // 2. Transforma lo que nos devuelve Firebase en una categoría de Flutter
+  static CategoriaMarca fromFirebase(Map<String, dynamic> json, IconData iconoAsignado) {
+    var listaHistorial = json['historial'] as List? ?? [];
+    List<Registro> historialParseado = listaHistorial.map((r) {
+      return Registro(
+        fecha: DateTime.parse(r['fecha']),
+        segundosTotales: (r['segundosTotales'] as num).toDouble(),
+      );
+    }).toList();
+
+    return CategoriaMarca(
+      id: json['id'],
+      nombre: json['nombre'],
+      icono: iconoAsignado,
+      objetivo: (json['objetivo'] as num).toDouble(),
+      historial: historialParseado,
+    );
   }
 }
