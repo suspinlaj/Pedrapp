@@ -46,15 +46,11 @@ class _DialogBuscarDireccionState extends State<DialogBuscarDireccion> {
 
   @override
   Widget build(BuildContext context) {
-    // Altura del diálogo al 60% de la pantalla
-    final maxHeight = MediaQuery.of(context).size.height * 0.6;
-
     return DialogGeneral(
       title: 'Buscar Lugar',
       onSave: _guardarLugar,
-      content: Container(
-        width: double.maxFinite,
-        constraints: BoxConstraints(maxHeight: maxHeight),
+      content: SizedBox(
+        width: 400, // Ancho fijo para que no se estire por toda la pantalla
         child: Column(
           mainAxisSize: MainAxisSize.min, // El diálogo se ajusta al contenido
           children: [
@@ -109,32 +105,37 @@ class _DialogBuscarDireccionState extends State<DialogBuscarDireccion> {
                 ),
               ),
             // --- LISTA SUGERENCIAS --- 
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: sugerencias.length,
-                itemBuilder: (context, index) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(sugerencias[index]['display_name'], style: const TextStyle(fontSize: 12)),
-                  leading: const Icon(Icons.location_on, color: Colores.rojo),
-                  // Al seleccionar una sugerencia, guarda el lugar con las coordenadas encontradas
-                  onTap: () {
-                    if (nombreController.text.isEmpty) {
-                      setState(() => error = "Escribe un nombre primero maldito vago .-.");
-                      return;
-                    }
-                    final nuevo = Lugar(
-                      nombre: nombreController.text,
-                      direccion: sugerencias[index]['display_name'], 
-                      latitud: double.parse(sugerencias[index]['lat']),
-                      longitud: double.parse(sugerencias[index]['lon']),
-                    );
-                    widget.onGuardar(nuevo);
-                    Navigator.pop(context);
-                  },
+            if (sugerencias.isNotEmpty)
+              Flexible(
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 200), // Límite de altura para la lista
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: sugerencias.length,
+                    itemBuilder: (context, index) => ListTile(
+                      dense: true, // Hace que cada resultado sea más compacto
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(sugerencias[index]['display_name'], style: const TextStyle(fontSize: 12)),
+                      leading: const Icon(Icons.location_on, color: Colores.rojo),
+                      // Al seleccionar una sugerencia, guarda el lugar con las coordenadas encontradas
+                      onTap: () {
+                        if (nombreController.text.isEmpty) {
+                          setState(() => error = "Escribe un nombre primero maldito vago .-.");
+                          return;
+                        }
+                        final nuevo = Lugar(
+                          nombre: nombreController.text,
+                          direccion: sugerencias[index]['display_name'], 
+                          latitud: double.parse(sugerencias[index]['lat']),
+                          longitud: double.parse(sugerencias[index]['lon']),
+                        );
+                        widget.onGuardar(nuevo);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            )
+              )
           ],
         ),
       ),
