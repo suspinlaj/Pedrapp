@@ -83,7 +83,7 @@ class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
                   color: Colores.rojo,
                   fontSize: 12,
                   fontStyle: FontStyle.italic,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),

@@ -34,14 +34,11 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
 
   @override
   Widget build(BuildContext context) {
-    // Saber las medidas exactas de la pantalla del móvil
     final altoPantalla = MediaQuery.of(context).size.height;
-    final isLandscape =
-    MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
       body: Container(
-        height: altoPantalla, // Asegurar que el fondo ocupa todo el alto
         decoration: BoxDecoration(
           color: Colors.white,
           image: DecorationImage(
@@ -50,108 +47,99 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, 
-                children: [
-                  
-                  SizedBox(height: altoPantalla * 0.14), 
-                  
-                  RichText(
-                    text: const TextSpan(
-                      // --- TITULO ---
-                      style: TextStyle(
-                        fontFamily: 'Titulo', 
-                        fontSize: 80,
-                      ),
-                      children: [
-                        // 1º PARTE
-                        TextSpan(
-                          text: 'Pedr',
-                          style: TextStyle(color: Colores.gris), 
-                        ),
-                        // 2º PARTE
-                        TextSpan(
-                          text: 'app',
-                          style: TextStyle(color: Colores.rojo), 
-                        ),
-                      ],
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center, 
+              children: [
+                
+                const Spacer(flex: 5), 
+                
+                RichText(
+                  text: const TextSpan(
+                    // --- TITULO ---
+                    style: TextStyle(
+                      fontFamily: 'Titulo', 
+                      fontSize: 80,
+                    ),
+                    children: [
+                      TextSpan(text: 'Pedr', style: TextStyle(color: Colores.gris)),
+                      TextSpan(text: 'app', style: TextStyle(color: Colores.rojo)),
+                    ],
+                  ),
+                ),
+                
+                const Spacer(flex: 1), 
+
+                // --- IMAGEN ANIMADA ---
+                Image.asset(
+                  _mostrarPrimeraImagen 
+                      ? 'assets/images/bombero1.png' 
+                      : 'assets/images/bombero2.png', 
+                  height: altoPantalla * 0.35, 
+                ),
+
+                const Spacer(flex: 1), 
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40.0), 
+                  // --- FRASE DEL DÍA ---
+                  child: Text(
+                    '"${Frases.obtenerFraseDelDia()}"',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic, 
+                      color: Colors.black, 
                     ),
                   ),
-                  
-                  SizedBox(height: altoPantalla * 0.02), 
+                ),
 
-                  // --- IMAGEN ANIMADA ---
-                  Image.asset(
-                    _mostrarPrimeraImagen 
-                        ? 'assets/images/bombero1.png' 
-                        : 'assets/images/bombero2.png', 
-                    height: altoPantalla * 0.35, 
+                const Spacer(flex: 2), 
+
+                // --- BOTÓN ENTRAR ---
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MenuPantalla()),
+                    );                    
+                  },
+                  style: TextButton.styleFrom(
+                    splashFactory: NoSplash.splashFactory, 
                   ),
-
-                  SizedBox(height: altoPantalla * 0.04), 
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40.0), 
-                    // --- FRASE DEL DÍA ---
-                    child: Text(
-                      '"${Frases.obtenerFraseDelDia()}"',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontStyle: FontStyle.italic, 
-                        color: Colors.black, 
-                      ),
+                  child: const Text(
+                    'Entrar',
+                    style: TextStyle(
+                      fontFamily: 'Titulo', 
+                      fontSize: 24,
+                      color: Colores.rojo, 
                     ),
                   ),
+                ),
 
-                  SizedBox(height: altoPantalla * 0.08), 
+                const Spacer(flex: 5), 
 
-                  // --- BOTÓN ENTRAR ---
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const MenuPantalla()),
-                          );                    },
-                    style: TextButton.styleFrom(
-                      splashFactory: NoSplash.splashFactory, 
-                    ),
-                    // --- TEXTO DEL BOTÓN ---
-                    child: const Text(
-                      'Entrar',
-                      style: TextStyle(
-                        fontFamily: 'Titulo', 
-                        fontSize: 24,
-                        color: Colores.rojo, 
-                      ),
+                // --- COPIA DE SEGURIDAD  ---
+                TextButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => const DialogRecuperarDatos(),
+                    );
+                  },
+                  child: const Text(
+                    'Copia de seguridad',
+                    style: TextStyle(
+                      color: Colores.rojo,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
-
-                  SizedBox(height: altoPantalla * 0.08), 
-
-                  // --- COPIA DE SEGURIDAD  ---
-                  TextButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => const DialogRecuperarDatos(),
-                      );
-                    },
-                    child: const Text(
-                      'Copia de seguridad',
-                      style: TextStyle(
-                        color: Colores.rojo,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
+                ),
+                
+                const SizedBox(height: 5),
+              ],
             ),
           ),
         ),

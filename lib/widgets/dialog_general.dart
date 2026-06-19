@@ -26,7 +26,7 @@ class DialogGeneral extends StatelessWidget {
       backgroundColor: Colors.white, 
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Colores.gris, width: 4),
+        side: const BorderSide(color: Colores.rojo, width: 4),
       ),
       // --- TITULO --- 
       title: Text(title, style: TextStyle(
