@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/marca.dart';
-import 'package:pedrapp/widgets/dialog_general.dart'; 
+import 'package:pedrapp/widgets/dialog_general.dart';
 
 class DetalleMarcaPantalla extends StatefulWidget {
   final CategoriaMarca categoria;
@@ -15,7 +16,101 @@ class DetalleMarcaPantalla extends StatefulWidget {
 
 class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
 
-  // DIÁLOGO PARA AÑADIR/EDITAR
+  // --- DIÁLOGO: EDITAR OBJETIVO ---
+  void _mostrarDialogoEditarObjetivo() {
+    final minsController = TextEditingController();
+    final secsController = TextEditingController();
+
+    int minutos = (widget.categoria.objetivo / 60).floor();
+    double segundos = widget.categoria.objetivo % 60;
+    minsController.text = minutos.toString();
+    secsController.text = segundos == segundos.truncateToDouble() 
+        ? segundos.toInt().toString() 
+        : segundos.toStringAsFixed(1);
+
+    showDialog(
+      context: context,
+      builder: (context) => DialogGeneral(
+        title: "Editar Objetivo",
+        saveText: "Guardar",
+        colorTema: widget.colorFondo,
+        onSave: () {
+          double mins = double.tryParse(minsController.text) ?? 0.0;
+          double secs = double.tryParse(secsController.text) ?? 0.0;
+          double totalSegundos = (mins * 60) + secs;
+
+          if (totalSegundos > 0) {
+            setState(() {
+              widget.categoria.objetivo = totalSegundos;
+            });
+            Navigator.pop(context);
+          }
+        },
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: minsController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(2),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: "Minutos",
+                      labelStyle: const TextStyle(fontSize: 14),
+                      floatingLabelStyle: TextStyle(color: widget.colorFondo, fontWeight: FontWeight.bold),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
+                        borderRadius: const BorderRadius.all(Radius.circular(10)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
+                        borderRadius: const BorderRadius.all(Radius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: secsController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(2),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: "Segundos",
+                      labelStyle: const TextStyle(fontSize: 14),
+                      floatingLabelStyle: TextStyle(color: widget.colorFondo, fontWeight: FontWeight.bold),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
+                        borderRadius: const BorderRadius.all(Radius.circular(10)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
+                        borderRadius: const BorderRadius.all(Radius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- DIÁLOGO PARA AÑADIR/EDITAR MARCA ---
   void _mostrarDialogoMarca({Registro? registroAEditar, int? indexReal}) {
     final minsController = TextEditingController();
     final secsController = TextEditingController();
@@ -41,7 +136,7 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
           return DialogGeneral(
             title: registroAEditar == null ? "Nueva Marca" : "Editar Marca",
             saveText: "Guardar",
-            colorTema: widget.colorFondo, // <--- MAGIA: Le pasamos el color de la categoría
+            colorTema: widget.colorFondo, 
             onSave: () {
               double mins = double.tryParse(minsController.text) ?? 0.0;
               double secs = double.tryParse(secsController.text) ?? 0.0;
@@ -63,7 +158,6 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Fila del calendario
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -93,17 +187,21 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                // Fila de los tiempos (CON TUS BORDES)
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
                         controller: minsController,
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(2),
+                        ],
                         decoration: InputDecoration(
                           labelText: "Minutos",
+                          labelStyle: const TextStyle(fontSize: 14),
                           floatingLabelStyle: TextStyle(color: widget.colorFondo, fontWeight: FontWeight.bold),
-                          // Tu diseño de bordes redondeados
+                          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
                             borderRadius: const BorderRadius.all(Radius.circular(10)),
@@ -122,10 +220,15 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
                       child: TextField(
                         controller: secsController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(2),
+                        ],
                         decoration: InputDecoration(
                           labelText: "Segundos",
+                          labelStyle: const TextStyle(fontSize: 14),
                           floatingLabelStyle: TextStyle(color: widget.colorFondo, fontWeight: FontWeight.bold),
-                          // Tu diseño de bordes redondeados
+                          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
                             borderRadius: const BorderRadius.all(Radius.circular(10)),
@@ -147,14 +250,14 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
     );
   }
 
-  // DIÁLOGO DE BORRAR
+  // --- DIÁLOGO DE BORRAR ---
   void _confirmarBorrado(int indexReal) {
     showDialog(
       context: context,
       builder: (context) => DialogGeneral(
         title: 'Eliminar Marca',
         saveText: 'Borrar',
-        colorTema: widget.colorFondo, // <--- También le pasamos el color aquí
+        colorTema: widget.colorFondo, 
         onSave: () {
           setState(() {
             widget.categoria.historial.removeAt(indexReal);
@@ -165,12 +268,7 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
           TextSpan(
             style: const TextStyle(fontSize: 16, color: Colors.black87), 
             children: [
-              const TextSpan(text: '¿Seguro que quieres borrar esta marca de '), 
-              TextSpan(
-                text: widget.categoria.nombre, 
-                style: const TextStyle(fontWeight: FontWeight.bold), 
-              ),
-              const TextSpan(text: '?\n\nEsto no se puede deshacer.'), 
+              const TextSpan(text: '¿Seguro que quieres borrar esta marca? Piénsatelo bien anda, que tú eres muy torpe '), 
             ],
           ),
           textAlign: TextAlign.start, 
@@ -194,7 +292,6 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
       ),
       body: Column(
         children: [
-          // --- CABECERA CON BARRA DE PROGRESO ---
           Container(
             padding: const EdgeInsets.all(20),
             color: widget.colorFondo.withOpacity(0.1),
@@ -213,7 +310,16 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text("Objetivo", style: TextStyle(color: Colores.gris, fontSize: 14)),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text("Objetivo ", style: TextStyle(color: Colores.gris, fontSize: 14)),
+                            GestureDetector(
+                              onTap: _mostrarDialogoEditarObjetivo,
+                              child: Icon(Icons.edit, color: widget.colorFondo, size: 16),
+                            ),
+                          ],
+                        ),
                         Text(objetivo, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                       ],
                     ),
@@ -235,14 +341,15 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
           
           const Divider(height: 1, thickness: 1),
 
-          // --- HISTORIAL DE MARCAS ---
           Expanded(
             child: cat.historial.isEmpty
                 ? const Center(
-                    child: Text("Todavía no hay marcas registradas.\n¡A entrenar!", 
+                    child: Text("Todavía no hay marcas registradas vago.\n¡A entrenar!", 
                     textAlign: TextAlign.center, style: TextStyle(color: Colores.gris, fontSize: 16)),
                   )
                 : ListView.builder(
+                    // --- ¡AQUÍ ESTÁ LA MAGIA QUE QUITA EL EFECTO CHICLE! ---
+                    physics: const BouncingScrollPhysics(),
                     itemCount: cat.historial.length,
                     itemBuilder: (context, index) {
                       final indexReal = cat.historial.length - 1 - index;
