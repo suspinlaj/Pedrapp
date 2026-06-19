@@ -31,6 +31,7 @@ class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
   @override
   Widget build(BuildContext context) {
     return DialogGeneral(
+      // TITULO
       title: 'Copia Seguridad',
       saveText: 'Restaurar',
       onSave: () async {
@@ -40,8 +41,12 @@ class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
           if (mounted) {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
+              // TEXTO CONFIRMACION DATOS RESTAURADOS
               const SnackBar(
-                content: Text("Listooo! Reinicia la app para ver tus datos awa"),
+                content: Text(
+                  "Listooo! Reinicia la app para ver tus datos awa",
+                  textAlign: TextAlign.center, 
+                ),
                 backgroundColor: Colores.rojo, 
               ),
             );
@@ -51,6 +56,7 @@ class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
+        // TITULO CODIGO SECRETO
         children: [
           const Text("Tu código secreto, recuérdalo eh", style: TextStyle(
             fontWeight: FontWeight.bold,
@@ -63,7 +69,7 @@ class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
                 icon: const Icon(Icons.copy, size: 20),
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: _miId));
-                  // --- 2. Lógica para mostrar el mensaje temporalmente ---
+                  // --- Lógica para mostrar el mensaje temporalmente ---
                   setState(() => _isCopied = true);
                   Future.delayed(const Duration(seconds: 2), () {
                     if (mounted) setState(() => _isCopied = false);
@@ -73,7 +79,7 @@ class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
             ],
           ),
           
-          // --- 3. El mensajito que aparece solo si _isCopied es true ---
+          // MENSAJE SI SE COPIA EL CODIGO
           if (_isCopied)
             const Padding(
               padding: EdgeInsets.only(top: 10),
@@ -88,6 +94,7 @@ class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
               ),
             ),
 
+          // TITULO RECUPERAR DATOS
           const Divider(color: Colores.rojo, thickness: 1, height: 40),
           const Text("Aquí para recuperar tus datitos:",
           style: TextStyle(
@@ -96,6 +103,7 @@ class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
           const SizedBox(height: 10),
           TextField(
             controller: _restoreController,
+            // TEXTO HINT
             decoration: const InputDecoration(
               hintText: "Por lo que sea el código va aquí",
               
