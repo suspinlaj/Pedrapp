@@ -1,6 +1,4 @@
-// lib/modelos/modelo_marca.dart
-
-import 'package:flutter/material.dart'; // <-- Añadido para poder usar IconData
+import 'package:flutter/material.dart';
 
 class Registro {
   final DateTime fecha;
@@ -11,13 +9,13 @@ class Registro {
 
 class CategoriaMarca {
   String nombre;
-  IconData icono; // <-- Nuevo campo para el icono
+  IconData icono;
   double objetivo;
   List<Registro> historial;
 
   CategoriaMarca({
     required this.nombre,
-    required this.icono, // <-- Lo pedimos aquí
+    required this.icono,
     required this.objetivo,
     List<Registro>? historial,
   }) : historial = historial ?? [];
@@ -34,16 +32,26 @@ class CategoriaMarca {
     return historial.map((e) => e.segundosTotales).reduce((a, b) => a > b ? a : b);
   }
 
-  // Calcula cómo de llena debe estar la barra (de 0.0 a 1.0)
+  // --- LÓGICA DE PROGRESO TOTALMENTE NUEVA ---
   double get progreso {
-    if (historial.isEmpty || historial.length == 1) return 0.0; 
+    if (historial.isEmpty) return 0.0; 
+
     double mejor = mejorMarca;
-    double peor = peorMarca;
-    
+
+    // 1. Si ya logró el objetivo, 100% de una.
     if (mejor <= objetivo) return 1.0; 
-    if (peor == objetivo) return 0.0; 
+
+    // 2. Establecemos el punto 0% de la barra (el "peor tiempo de referencia").
+    // Por ejemplo: si el objetivo es 60s, el 0% de la barra serán 90s.
+    double peorReferencia = objetivo * 1.5; 
     
-    double progresoCalculado = (peor - mejor) / (peor - objetivo);
+    // Si su peor marca real es AÚN MÁS LENTA que esa referencia, usamos su peor marca 
+    // real como 0%. Si no, usamos la referencia para que siempre haya color en la barra.
+    double puntoDePartida = peorMarca > peorReferencia ? peorMarca : peorReferencia;
+    
+    // 3. Calculamos la fórmula en base a ese punto de partida
+    double progresoCalculado = (puntoDePartida - mejor) / (puntoDePartida - objetivo);
+    
     return progresoCalculado.clamp(0.0, 1.0); 
   }
   
