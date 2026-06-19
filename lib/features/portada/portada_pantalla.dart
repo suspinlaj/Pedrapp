@@ -52,7 +52,7 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
               mainAxisAlignment: MainAxisAlignment.center, 
               children: [
                 
-                const Spacer(flex: 5), 
+                const Spacer(flex: 7), 
                 
                 RichText(
                   text: const TextSpan(
