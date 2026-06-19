@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/marca.dart';
 import 'package:pedrapp/servicios/marcas_service.dart';
-import 'package:pedrapp/widgets/dialog_eliminar.dart';
-import 'package:pedrapp/widgets/dialog_general.dart';
+import 'package:pedrapp/widgets/mapa_widgets/dialog_eliminar.dart';
+import 'package:pedrapp/widgets/marcas_widgets/marca_dialog.dart';
+import 'package:pedrapp/widgets/marcas_widgets/objetivo_dialog.dart';
 
 class DetalleMarcaPantalla extends StatefulWidget {
   final CategoriaMarca categoria;
@@ -18,263 +18,56 @@ class DetalleMarcaPantalla extends StatefulWidget {
 
 class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
 
-  // --- DIÁLOGO: EDITAR OBJETIVO ---
+  // --- 1. ABRIR DIÁLOGO DE OBJETIVO ---
   void _mostrarDialogoEditarObjetivo() {
-    final minsController = TextEditingController();
-    final secsController = TextEditingController();
-
-    int minutos = (widget.categoria.objetivo / 60).floor();
-    double segundos = widget.categoria.objetivo % 60;
-    minsController.text = minutos.toString();
-    secsController.text = segundos == segundos.truncateToDouble() 
-        ? segundos.toInt().toString() 
-        : segundos.toStringAsFixed(1);
-
     showDialog(
       context: context,
-      builder: (context) => DialogGeneral(
-        title: "Editar Objetivo",
-        saveText: "Guardar",
-        colorTema: widget.colorFondo,
-        onSave: () {
-          double mins = double.tryParse(minsController.text) ?? 0.0;
-          double secs = double.tryParse(secsController.text) ?? 0.0;
-          double totalSegundos = (mins * 60) + secs;
-
-          if (totalSegundos > 0) {
-            setState(() {
-              widget.categoria.objetivo = totalSegundos;
-            });
-            // --- AÑADIDO: GUARDAR OBJETIVO EN FIREBASE ---
-            MarcasService().guardarCategoria(widget.categoria);
-            Navigator.pop(context);
-          }
+      builder: (context) => ObjetivoDialog( // <-- Llamamos al archivo externo
+        objetivoActual: widget.categoria.objetivo,
+        colorFondo: widget.colorFondo,
+        onSave: (nuevoObjetivo) {
+          setState(() => widget.categoria.objetivo = nuevoObjetivo);
+          MarcasService().guardarCategoria(widget.categoria);
         },
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: minsController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(2),
-                    ],
-                    decoration: InputDecoration(
-                      labelText: "Minutos",
-                      labelStyle: const TextStyle(fontSize: 14),
-                      floatingLabelStyle: TextStyle(color: widget.colorFondo, fontWeight: FontWeight.bold),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
-                        borderRadius: const BorderRadius.all(Radius.circular(10)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
-                        borderRadius: const BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: secsController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(2),
-                    ],
-                    decoration: InputDecoration(
-                      labelText: "Segundos",
-                      labelStyle: const TextStyle(fontSize: 14),
-                      floatingLabelStyle: TextStyle(color: widget.colorFondo, fontWeight: FontWeight.bold),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
-                        borderRadius: const BorderRadius.all(Radius.circular(10)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
-                        borderRadius: const BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
 
-  // --- DIÁLOGO PARA AÑADIR/EDITAR MARCA ---
+  // --- 2. ABRIR DIÁLOGO DE MARCA ---
   void _mostrarDialogoMarca({Registro? registroAEditar, int? indexReal}) {
-    final minsController = TextEditingController();
-    final secsController = TextEditingController();
-    
-    DateTime fechaSeleccionada = registroAEditar?.fecha ?? DateTime.now();
-
-    if (registroAEditar != null) {
-      int minutos = (registroAEditar.segundosTotales / 60).floor();
-      double segundos = registroAEditar.segundosTotales % 60;
-      minsController.text = minutos.toString();
-      secsController.text = segundos == segundos.truncateToDouble() 
-          ? segundos.toInt().toString() 
-          : segundos.toStringAsFixed(1);
-    }
-
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder( 
-        builder: (context, setStateDialog) {
-          
-          String fechaStr = "${fechaSeleccionada.day.toString().padLeft(2, '0')}/${fechaSeleccionada.month.toString().padLeft(2, '0')}/${fechaSeleccionada.year}";
-
-          return DialogGeneral(
-            title: registroAEditar == null ? "Nueva Marca" : "Editar Marca",
-            saveText: "Guardar",
-            colorTema: widget.colorFondo, 
-            onSave: () {
-              double mins = double.tryParse(minsController.text) ?? 0.0;
-              double secs = double.tryParse(secsController.text) ?? 0.0;
-              double totalSegundos = (mins * 60) + secs;
-
-              if (totalSegundos > 0) {
-                setState(() {
-                  if (registroAEditar != null && indexReal != null) {
-                    widget.categoria.historial[indexReal] = Registro(fecha: fechaSeleccionada, segundosTotales: totalSegundos);
-                  } else {
-                    widget.categoria.historial.add(Registro(fecha: fechaSeleccionada, segundosTotales: totalSegundos));
-                  }
-                  widget.categoria.historial.sort((a, b) => a.fecha.compareTo(b.fecha));
-                });
-                // --- AÑADIDO: GUARDAR NUEVA MARCA EN FIREBASE ---
-                MarcasService().guardarCategoria(widget.categoria);
-                Navigator.pop(context);
-              }
-            },
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Fecha: $fechaStr", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    IconButton(
-                      icon: Icon(Icons.calendar_month, color: widget.colorFondo, size: 28), 
-                      onPressed: () async {
-                        DateTime? seleccion = await showDatePicker(
-                          context: context,
-                          initialDate: fechaSeleccionada,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime.now(),
-                          builder: (context, child) {
-                            return Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: ColorScheme.light(primary: widget.colorFondo),
-                              ),
-                              child: child!,
-                            );
-                          },
-                        );
-                        if (seleccion != null) {
-                          setStateDialog(() => fechaSeleccionada = seleccion);
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: minsController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(2),
-                        ],
-                        decoration: InputDecoration(
-                          labelText: "Minutos",
-                          labelStyle: const TextStyle(fontSize: 14),
-                          floatingLabelStyle: TextStyle(color: widget.colorFondo, fontWeight: FontWeight.bold),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
-                            borderRadius: const BorderRadius.all(Radius.circular(10)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
-                            borderRadius: const BorderRadius.all(Radius.circular(10)),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: secsController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(2),
-                        ],
-                        decoration: InputDecoration(
-                          labelText: "Segundos",
-                          labelStyle: const TextStyle(fontSize: 14),
-                          floatingLabelStyle: TextStyle(color: widget.colorFondo, fontWeight: FontWeight.bold),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
-                            borderRadius: const BorderRadius.all(Radius.circular(10)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: widget.colorFondo, width: 2.0),
-                            borderRadius: const BorderRadius.all(Radius.circular(10)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }
+      builder: (context) => DialogoMarca( // <-- Llamamos al archivo externo
+        registroAEditar: registroAEditar,
+        colorFondo: widget.colorFondo,
+        onSave: (nuevaFecha, totalSegundos) {
+          setState(() {
+            if (registroAEditar != null && indexReal != null) {
+              widget.categoria.historial[indexReal] = Registro(fecha: nuevaFecha, segundosTotales: totalSegundos);
+            } else {
+              widget.categoria.historial.add(Registro(fecha: nuevaFecha, segundosTotales: totalSegundos));
+            }
+            widget.categoria.historial.sort((a, b) => a.fecha.compareTo(b.fecha));
+          });
+          MarcasService().guardarCategoria(widget.categoria);
+        },
       ),
     );
   }
 
-  // --- DIÁLOGO DE BORRAR ---
-  // --- DIÁLOGO DE BORRAR ---
+  // --- 3. ABRIR DIÁLOGO DE BORRAR ---
   void _confirmarBorrado(int indexReal) {
-    // 1. Obtenemos el registro exacto que el usuario quiere borrar
     final registro = widget.categoria.historial[indexReal];
-    
-    // 2. Lo convertimos a formato texto (Ej: "01:05.0")
     final tiempoFormateado = CategoriaMarca.formatearTiempo(registro.segundosTotales);
 
     showDialog(
       context: context,
       builder: (context) => DialogEliminar(
-        titulo: 'Eliminar Marca',
-        nombreItem: tiempoFormateado, // <-- Aquí le pasamos la marca en lugar del nombre
-        finalMensaje: 'de esta categoría?\n\nEsto no se puede deshacer eh.', // Ajustamos el texto final
+        titulo: 'ELiminar Marca',
+        nombreItem: tiempoFormateado, 
+        finalMensaje: 'de esta categoría?\n\nEsto no se puede deshacer eh.', 
         onConfirm: () {
-          setState(() {
-            widget.categoria.historial.removeAt(indexReal);
-          });
+          setState(() => widget.categoria.historial.removeAt(indexReal));
           MarcasService().guardarCategoria(widget.categoria);
           Navigator.pop(context);
         },
@@ -291,18 +84,15 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
 
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 0,        // <-- Añade esta línea
+        titleSpacing: 0,        
         centerTitle: false,
-        title: Text(
-          cat.nombre, 
-          style: const TextStyle(
-            fontFamily: 'Titulo', 
-            color: Colors.white)),
+        title: Text(cat.nombre, style: const TextStyle(fontFamily: 'Titulo', color: Colors.white)),
         backgroundColor: widget.colorFondo,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [
+          // CABECERA
           Container(
             padding: const EdgeInsets.all(20),
             color: widget.colorFondo.withOpacity(0.1),
@@ -352,6 +142,7 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
           
           const Divider(height: 1, thickness: 1),
 
+          // LISTA HISTORIAL
           Expanded(
             child: cat.historial.isEmpty
                 ? const Center(

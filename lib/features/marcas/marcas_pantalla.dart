@@ -15,7 +15,6 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
   final MarcasService _marcasServicio = MarcasService();
   bool cargando = true;
 
-  // Esta lista ahora actúa como la "plantilla de fábrica" inicial
   List<CategoriaMarca> misCategorias = [
     CategoriaMarca(id: "natacion_50", nombre: "Natacion 50", icono: Icons.waves, objetivo: 30.0),
     CategoriaMarca(id: "natacion_100", nombre: "Natacion 100", icono: Icons.pool, objetivo: 65.0),
@@ -40,24 +39,20 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
     _cargarDatosReales();
   }
 
-  // Conectamos con Firebase al abrir la pantalla
   void _cargarDatosReales() async {
     var datosNube = await _marcasServicio.cargarCategorias(misCategorias);
     
-    // --- AQUÍ ESTÁ LA CORRECCIÓN ---
-    // Creamos una lista nueva ordenada exactamente igual que nuestra plantilla 'misCategorias'
     List<CategoriaMarca> listaOrdenada = [];
     for (var plantilla in misCategorias) {
-      // Buscamos el elemento que viene de Firebase que tenga el mismo ID
       var encontrado = datosNube.firstWhere(
         (cat) => cat.id == plantilla.id, 
-        orElse: () => plantilla // Si no existe en Firebase, usamos la plantilla
+        orElse: () => plantilla 
       );
       listaOrdenada.add(encontrado);
     }
 
     setState(() {
-      misCategorias = listaOrdenada; // Ahora siempre estará en el mismo orden
+      misCategorias = listaOrdenada; 
       cargando = false;
     });
   }
@@ -74,7 +69,7 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
       length: 2, 
       child: Scaffold(
         appBar: AppBar(
-          titleSpacing: 0, // <--- Esto elimina el margen extra que Flutter añade a la izquierda
+          titleSpacing: 0, 
           centerTitle: false,
           title: const Text('Marcas oposicion', style: TextStyle(fontFamily: 'Titulo', color: Colors.white)),
           backgroundColor: Colores.rojo,
@@ -92,101 +87,134 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
         ),
         body: TabBarView(
           children: [
-            // --- PESTAÑA 1: RESUMEN GENERAL ---
-            ListView.separated(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              itemCount: misCategorias.length,
-              separatorBuilder: (context, index) => const Divider(color: Colores.rojo),
-              itemBuilder: (context, index) {
-                final cat = misCategorias[index];
-                final colorCategoria = paletaColores[index % paletaColores.length]; 
-                final mejor = CategoriaMarca.formatearTiempo(cat.mejorMarca);
-                final objetivo = CategoriaMarca.formatearTiempo(cat.objetivo);
-                final estaLogrado = cat.progreso >= 1.0;
-
-                return ListTile(
-                  leading: Icon(cat.icono, color: colorCategoria, size: 30), 
-                  title: Text(cat.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  subtitle: Text("Objetivo: $objetivo"),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        mejor == "--:--" ? "Sin datos" : mejor, 
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: estaLogrado ? Colors.green : Colores.rojo)
-                      ),
-                      if (estaLogrado) const Padding(
-                        padding: EdgeInsets.only(left: 8.0),
-                        child: Icon(Icons.check_circle, color: Colors.green),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-
-            // --- PESTAÑA 2: CUADRÍCULA DE CATEGORÍAS ---
-            GridView.builder(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3, 
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1, 
-              ),
-              itemCount: misCategorias.length,
-              itemBuilder: (context, index) {
-                final cat = misCategorias[index];
-                final colorBoton = paletaColores[index % paletaColores.length];
-
-                return Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(2, 2))],
-                  ),
-                  child: Material(
-                    color: colorBoton,
-                    borderRadius: BorderRadius.circular(15),
-                    clipBehavior: Clip.antiAlias, 
-                    child: InkWell(
-                      onTap: () async {
-                        // Navegamos al detalle
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => DetalleMarcaPantalla(categoria: cat, colorFondo: colorBoton)),
-                        );
-                        // Al volver del detalle, como allí se guardará en Firebase, volvemos a pedir los datos frescos
-                        _cargarDatosReales(); 
-                      },
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(cat.icono, color: Colors.white, size: 36), 
-                              const SizedBox(height: 8),
-                              Text(
-                                cat.nombre,
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+            // --- AHORA USAMOS LOS WIDGETS REFACTORIZADOS ---
+            _ListaResumen(categorias: misCategorias, colores: paletaColores),
+            _GridCategorias(
+              categorias: misCategorias, 
+              colores: paletaColores,
+              alVolver: _cargarDatosReales, // Le pasamos la función para refrescar
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ============================================================================
+// --- WIDGETS REFACTORIZADOS (Puedes moverlos a otro archivo si quieres) ---
+// ============================================================================
+
+class _ListaResumen extends StatelessWidget {
+  final List<CategoriaMarca> categorias;
+  final List<Color> colores;
+
+  const _ListaResumen({required this.categorias, required this.colores});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      itemCount: categorias.length,
+      separatorBuilder: (context, index) => const Divider(color: Colores.rojo),
+      itemBuilder: (context, index) {
+        final cat = categorias[index];
+        final colorCategoria = colores[index % colores.length]; 
+        final mejor = CategoriaMarca.formatearTiempo(cat.mejorMarca);
+        final objetivo = CategoriaMarca.formatearTiempo(cat.objetivo);
+        final estaLogrado = cat.progreso >= 1.0;
+
+        return ListTile(
+          leading: Icon(cat.icono, color: colorCategoria, size: 30), 
+          title: Text(cat.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          subtitle: Text("Objetivo: $objetivo"),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                mejor == "--:--" ? "Sin datos" : mejor, 
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: estaLogrado ? Colors.green : Colores.rojo)
+              ),
+              if (estaLogrado) const Padding(
+                padding: EdgeInsets.only(left: 8.0),
+                child: Icon(Icons.check_circle, color: Colors.green),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _GridCategorias extends StatelessWidget {
+  final List<CategoriaMarca> categorias;
+  final List<Color> colores;
+  final VoidCallback alVolver;
+
+  const _GridCategorias({
+    required this.categorias, 
+    required this.colores,
+    required this.alVolver,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3, 
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1, 
+      ),
+      itemCount: categorias.length,
+      itemBuilder: (context, index) {
+        final cat = categorias[index];
+        final colorBoton = colores[index % colores.length];
+
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(2, 2))],
+          ),
+          child: Material(
+            color: colorBoton,
+            borderRadius: BorderRadius.circular(15),
+            clipBehavior: Clip.antiAlias, 
+            child: InkWell(
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => DetalleMarcaPantalla(categoria: cat, colorFondo: colorBoton)),
+                );
+                alVolver(); 
+              },
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(cat.icono, color: Colors.white, size: 36), 
+                      const SizedBox(height: 8),
+                      Text(
+                        cat.nombre,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

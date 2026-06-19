@@ -4,10 +4,10 @@ import 'package:latlong2/latlong.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/lugar.dart';
 import 'package:pedrapp/servicios/lugar_service.dart';
+import 'package:pedrapp/widgets/mapa_widgets/dialog_buscar_direccion.dart';
 import 'package:pedrapp/widgets/dialog_eliminar.dart';
-import 'package:pedrapp/widgets/lista_lugares.dart';
-import 'package:pedrapp/widgets/dialog_lugar_exacto.dart';
-import 'package:pedrapp/widgets/dialog_buscar_direccion.dart';
+import 'package:pedrapp/widgets/mapa_widgets/dialog_lugar_exacto.dart';
+import 'package:pedrapp/widgets/mapa_widgets/lista_lugares.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MapaPantalla extends StatefulWidget {
