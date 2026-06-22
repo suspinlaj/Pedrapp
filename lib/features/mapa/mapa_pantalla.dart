@@ -4,10 +4,10 @@ import 'package:latlong2/latlong.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/lugar.dart';
 import 'package:pedrapp/servicios/lugar_service.dart';
+import 'package:pedrapp/widgets/mapa_widgets/dialog_buscar_direccion.dart';
 import 'package:pedrapp/widgets/dialog_eliminar.dart';
-import 'package:pedrapp/widgets/lista_lugares.dart';
-import 'package:pedrapp/widgets/dialog_lugar_exacto.dart';
-import 'package:pedrapp/widgets/dialog_buscar_direccion.dart';
+import 'package:pedrapp/widgets/mapa_widgets/dialog_lugar_exacto.dart';
+import 'package:pedrapp/widgets/mapa_widgets/lista_lugares.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MapaPantalla extends StatefulWidget {
@@ -102,7 +102,9 @@ class _MapaPantallaState extends State<MapaPantalla> {
     showDialog(
       context: context,
       builder: (context) => DialogEliminar(
-        nombreLugar: _misLugares[index].nombre,
+        titulo: 'Eliminar Lugar', // <-- El título del diálogo
+        nombreItem: _misLugares[index].nombre, // <-- El nombre que va en negrita
+        finalMensaje: 'de tu mapa?', // <-- El texto que va después del nombre
         onConfirm: () async {
           setState(() => _misLugares.removeAt(index));
           await LugarService.guardar(_misLugares);

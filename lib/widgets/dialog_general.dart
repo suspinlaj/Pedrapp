@@ -6,6 +6,7 @@ class DialogGeneral extends StatelessWidget {
   final Widget content;  // Contenido dinámico (campos de texto, mensajes, etc.)
   final VoidCallback onSave; // Acción al presionar el botón de guardar
   final String saveText; // Texto personalizado del botón de guardar (default: 'Guardar')
+  final Color colorTema; // colores de los bordes, titulo, etc
 
   const DialogGeneral({
     super.key,
@@ -13,6 +14,7 @@ class DialogGeneral extends StatelessWidget {
     required this.content,
     required this.onSave,
     this.saveText = 'Guardar',
+    this.colorTema = Colores.rojo, // Si no se le pasa color, rojo por defecto
   });
 
   @override
@@ -26,11 +28,11 @@ class DialogGeneral extends StatelessWidget {
       backgroundColor: Colors.white, 
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Colores.rojo, width: 4),
+        side: BorderSide(color: colorTema, width: 4),
       ),
       // --- TITULO --- 
       title: Text(title, style: TextStyle(
-        color: Colores.rojo, 
+        color: colorTema, 
         fontWeight: FontWeight.bold,
         fontSize: titleSize,
         fontFamily: 'Titulo',
@@ -55,7 +57,8 @@ class DialogGeneral extends StatelessWidget {
           child: Text(
             saveText, 
             style: TextStyle(
-              color: Colores.rojo, 
+              // ¡Cambiado aquí!
+              color: colorTema, 
               fontWeight: FontWeight.bold, 
               fontFamily: 'Subtitulo',
               fontSize: btnSize),

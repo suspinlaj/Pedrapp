@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/features/mapa/mapa_pantalla.dart';
+import 'package:pedrapp/features/marcas/marcas_pantalla.dart';
 
 class MenuPantalla extends StatelessWidget {
   const MenuPantalla({super.key});
@@ -103,8 +104,10 @@ final isLandscape =
                       icono: Icons.fitness_center,
                       colorFondo: Colores.rojo,
                       colorTexto: Colors.white,
-                      // TODO: pantalla marcas
-                      onTap: () => _mostrarProximamente(context, 'Marcas'),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MarcasPantalla()),
+                      ),
                     ),
                   ],
                 ),
