@@ -20,6 +20,18 @@ class MarcasService {
         .set(categoria.toFirebase()); 
   }
 
+  // --- BORRAR UNA CATEGORÍA ENTERA ---
+  Future<void> borrarCategoria(String idCategoria) async {
+    final idDispositivo = await LugarService.getDeviceId(); 
+
+    await _db
+        .collection('usuarios')
+        .doc(idDispositivo) 
+        .collection('marcas_oposicion')
+        .doc(idCategoria)
+        .delete(); // para borrar de Firebase
+  }
+
   // --- DESCARGAR DATOS AL ABRIR LA APP ---
   // Pide a Firebase las marcas guardadas.
   Future<List<CategoriaMarca>> cargarCategorias(List<CategoriaMarca> plantillaInicial) async {

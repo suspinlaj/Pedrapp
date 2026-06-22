@@ -64,10 +64,9 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
     );
   }
 
-  // --- ABRIR DIÁLOGO DE BORRAR ---
-  // pide confirmación antes de borrar una marca
+  // --- DIÁLOGO DE BORRAR ---
   void _confirmarBorrado(int indexReal) {
-    // Busca el registro exacto a borrar y formatea su tiempo para mostrarlo en el texto.
+    // Busca el registro  a borrar y formatea su tiempo para mostrarlo en el texto.
     final registro = widget.categoria.historial[indexReal];
     final tiempoFormateado = CategoriaMarca.formatearTiempo(registro.segundosTotales);
 
@@ -82,6 +81,25 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
           // Borra el ítem de la lista local, actualiza Firebase 
           setState(() => widget.categoria.historial.removeAt(indexReal));
           MarcasService().guardarCategoria(widget.categoria);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  // --- DIÁLOGO BORRAR CATEGORIA ---
+  // Elimina la categoría 
+  void _confirmarBorradoCategoria() {
+    showDialog(
+      context: context,
+      builder: (context) => DialogEliminar(
+        titulo: 'ELiminar PrueBa',
+        nombreItem: widget.categoria.nombre, 
+        finalMensaje: 'y todo su historial?\n\nPiensateló dos veces, que eres muy torpe eh.', 
+        onConfirm: () async {
+          // borrar de Firebase 
+          await MarcasService().borrarCategoria(widget.categoria.id);
+          Navigator.pop(context);
           Navigator.pop(context);
         },
       ),
@@ -105,6 +123,14 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
         title: Text(cat.nombre, style: const TextStyle(fontFamily: 'Titulo', color: Colors.white)),
         backgroundColor: widget.colorFondo, // Usa el color de la categoría.
         iconTheme: const IconThemeData(color: Colors.white), 
+        // --- BOTÓN DE PAPELERA  ---
+        actions: [
+          // Eliminamos la condición if para que siempre salga el botón
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.white),
+            onPressed: _confirmarBorradoCategoria,
+          ),
+        ],
       ),
 
       // CUERPO PRINCIPAL

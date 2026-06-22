@@ -3,6 +3,7 @@ import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/marca.dart';
 import 'package:pedrapp/features/marcas/detalle_marca_pantalla.dart';
 import 'package:pedrapp/servicios/marcas_service.dart';
+import 'package:pedrapp/widgets/marcas_widgets/nueva_categoria_dialog.dart';
 
 class MarcasPantalla extends StatefulWidget {
   const MarcasPantalla({super.key});
@@ -46,11 +47,15 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
 
   // Descarga los datos de Firebase en orden a mi lista
   void _cargarDatosReales() async {
-    var datosNube = await _marcasServicio.cargarCategorias(misCategorias);
+    // --- ACTUALIZAR AL BORRAR ---
+    List<CategoriaMarca> plantillaBase = misCategorias.where((c) => !c.id.startsWith('custom_')).toList();
+
+    var datosNube = await _marcasServicio.cargarCategorias(plantillaBase);
     
-    // Filtrar y ordenar para que los colores nunca cambien de sitio
     List<CategoriaMarca> listaOrdenada = [];
-    for (var plantilla in misCategorias) {
+    
+    // Filtrar y ordenar para que los colores nunca cambien de sitio 
+    for (var plantilla in plantillaBase) {
       var encontrado = datosNube.firstWhere(
         (cat) => cat.id == plantilla.id, 
         orElse: () => plantilla 
@@ -58,11 +63,51 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
       listaOrdenada.add(encontrado);
     }
 
-    // Actualiza la pantalla ocultando la carga y mostrando la lista definitiva
+    // --- ICONOS ROTATIVOS PARA CATEGORIAS NUEVAS ---
+    List<IconData> iconosGenericos = [
+      Icons.star, 
+      Icons.favorite, 
+      Icons.local_fire_department, 
+      Icons.bolt, 
+      Icons.diamond
+    ];
+
+    // Extraemos de la nube SOLO las que sean nuevas
+    List<CategoriaMarca> categoriasPersonalizadas = [];
+    for (var nube in datosNube) {
+      if (!plantillaBase.any((plantilla) => plantilla.id == nube.id)) {
+        categoriasPersonalizadas.add(nube);
+      }
+    }
+
+    // ordenar por antigüedad 
+    categoriasPersonalizadas.sort((a, b) => a.id.compareTo(b.id));
+
+    // añadir a la cola asignándoles el icono por orden de rotación
+    for (int i = 0; i < categoriasPersonalizadas.length; i++) {
+      // El operador % hace que si i=5, vuelva a coger el icono 0. 
+      categoriasPersonalizadas[i].icono = iconosGenericos[i % iconosGenericos.length];
+      listaOrdenada.add(categoriasPersonalizadas[i]);
+    }
+
     setState(() {
       misCategorias = listaOrdenada; 
       cargando = false;
     });
+  }
+
+  // diálogo y guardar la nueva categoría
+  void _mostrarDialogoNuevaCategoria() {
+    showDialog(
+      context: context,
+      builder: (context) => DialogoNuevaCategoria(
+        colorFondo: Colores.rojo,
+        onSave: (nuevaCategoria) async {
+          await _marcasServicio.guardarCategoria(nuevaCategoria); // Guarda en nube
+          _cargarDatosReales(); // Recarga la pantalla
+        },
+      ),
+    );
   }
 
   @override
@@ -109,6 +154,13 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
             ),
           ],
         ),
+        // --- BOTÓN FLOTANTE AÑADIDO ---
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _mostrarDialogoNuevaCategoria,
+          backgroundColor: Colores.rojo,
+          icon: const Icon(Icons.add, color: Colors.white),
+          label: const Text("Añadir Prueba", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
       ),
     );
   }
@@ -128,7 +180,7 @@ class _ListaResumen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       physics: const BouncingScrollPhysics(), // Scroll con rebote suave 
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 80), // Añadido bottom: 80
       itemCount: categorias.length,
       separatorBuilder: (context, index) => const Divider(color: Colores.rojo),
       itemBuilder: (context, index) {
@@ -179,7 +231,7 @@ class _GridCategorias extends StatelessWidget {
   Widget build(BuildContext context) {
     return GridView.builder(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 16), 
+      padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 80), // Añadido bottom: 80
       // cuántas columnas y sus espacios
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3, // 3 columnas
@@ -209,7 +261,7 @@ class _GridCategorias extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (context) => DetalleMarcaPantalla(categoria: cat, colorFondo: colorBoton)),
                 );
-                // función para refrescar la pantalla y ver si hay notas nuevas
+                // función para refrescar la pantalla y ver si hay notas nuevas (o si se ha borrado una prueba)
                 alVolver(); 
               },
               child: Center(
