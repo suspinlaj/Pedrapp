@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:pedrapp/widgets/dialog_general.dart';
 
 class DialogEliminar extends StatelessWidget {
-  final String titulo; // Ej: 'Eliminar Lugar' o 'Eliminar Marca'
-  final String nombreItem; // Lo que irá en negrita (el lugar o la categoría)
-  final String finalMensaje; // Lo que va al final (Ej: 'de tu mapa?' o '?\n\nEsto no se puede deshacer.')
+  final String titulo; // Título de la ventana 
+  final String nombreItem; // El elemento concreto a borrar
+  final String finalMensaje; // mensaje
   final VoidCallback onConfirm; 
 
   const DialogEliminar({
@@ -18,19 +18,24 @@ class DialogEliminar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DialogGeneral(
-      title: titulo,
-      saveText: 'Eliminar',
+      title: titulo, // título dinámico que le hayamos pasado
+      saveText: 'Eliminar', //boton eliminar
       onSave: onConfirm,
+      
       content: Text.rich(
         TextSpan(
+          // Estilo base para todo el bloque de texto 
           style: const TextStyle(fontSize: 18, color: Colors.black87),
           children: [
+            // inicio de la pregunta (Texto normal)
             const TextSpan(text: '¿Seguro que quieres borrar "'),
+            // El nombre del ítem
             TextSpan(
               text: nombreItem, 
               style: const TextStyle(fontWeight: FontWeight.bold), 
             ),
-            TextSpan(text: '" $finalMensaje'), // Añadimos el texto final dinámico
+            //  Texto final (Texto normal)
+            TextSpan(text: '" $finalMensaje'), 
           ],
         ),
         textAlign: TextAlign.start, 

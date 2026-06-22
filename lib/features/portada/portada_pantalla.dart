@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/core/frases.dart';
 import 'package:pedrapp/features/menu/menu_pantalla.dart';
-import 'package:pedrapp/widgets/dialogs/dialog_recuperar_datos.dart'; 
+import 'package:pedrapp/widgets/dialog_recuperar_datos.dart'; 
 
 class PortadaPantalla extends StatefulWidget {
   const PortadaPantalla({super.key});

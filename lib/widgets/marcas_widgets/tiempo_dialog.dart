@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class TiempoDialog extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final Color colorFondo;
-  final bool isDecimal;
+  final String label; // El texto que está arriba
+  final TextEditingController controller; // Extrae lo que el usuario escribe
+  final Color colorFondo; // El color de la categoría 
+  final bool isDecimal; 
 
   const TiempoDialog({
     super.key,
@@ -19,21 +19,31 @@ class TiempoDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: TextField(
-        controller: controller,
+        controller: controller, 
+        
+        // Define qué teclado se abre en el móvil:
+        // Si isDecimal es true, abre el teclado numérico con punto. Si no, el teclado numérico simple.
         keyboardType: isDecimal ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.number,
+        
         inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(2),
+          FilteringTextInputFormatter.digitsOnly, // Solo permite números 
+          LengthLimitingTextInputFormatter(2), //  max 2 caracteres 
         ],
+        
         decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 14),
+          labelText: label, // texto 
+          labelStyle: const TextStyle(fontSize: 14), // Tamaño texto
+          
           floatingLabelStyle: TextStyle(color: colorFondo, fontWeight: FontWeight.bold),
+          
+          // Espacio con los bordes de la caja
           contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+          
           enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: colorFondo, width: 2.0),
-            borderRadius: const BorderRadius.all(Radius.circular(10)),
+            borderSide: BorderSide(color: colorFondo, width: 2.0), // Borde de color y grosor 2
+            borderRadius: const BorderRadius.all(Radius.circular(10)), // Bordes redondeados
           ),
+          
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(color: colorFondo, width: 2.0),
             borderRadius: const BorderRadius.all(Radius.circular(10)),

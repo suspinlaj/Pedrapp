@@ -1,41 +1,40 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:pedrapp/modelos/marca.dart';
-
-// ¡IMPORTANTE! Importamos tu LugarService para poder usar su generador de ID
-// (Ajusta la ruta si tu archivo de LugarService está en otra carpeta)
 import 'package:pedrapp/servicios/lugar_service.dart'; 
 
 class MarcasService {
+  // leer y escribir en Firestore.
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Guardar o actualizar una categoría entera en la nube
+  // --- GUARDAR O ACTUALIZAR DATOS EN LA NUBE ---
   Future<void> guardarCategoria(CategoriaMarca categoria) async {
-    // --- ¡AQUÍ ESTÁ LA MAGIA! ---
-    // Usamos EXACTAMENTE el mismo ID que usa tu mapa
     final idDispositivo = await LugarService.getDeviceId(); 
 
+    // guardar/sobreescribir el documento con el ID de la categoría.
     await _db
         .collection('usuarios')
-        .doc(idDispositivo) // <-- ¡Ahora coincidirá con el del mapa!
+        .doc(idDispositivo) 
         .collection('marcas_oposicion')
         .doc(categoria.id)
-        .set(categoria.toFirebase());
+        .set(categoria.toFirebase()); 
   }
 
-  // Descargar todas las marcas desde la nube al abrir la app
+  // --- DESCARGAR DATOS AL ABRIR LA APP ---
+  // Pide a Firebase las marcas guardadas.
   Future<List<CategoriaMarca>> cargarCategorias(List<CategoriaMarca> plantillaInicial) async {
     try {
-      // Usamos EXACTAMENTE el mismo ID que usa tu mapa
+      //  mismo ID que usa el mapa 
       final idDispositivo = await LugarService.getDeviceId(); 
 
+      //  petición a Firebase
       var snapshot = await _db
           .collection('usuarios')
           .doc(idDispositivo) 
           .collection('marcas_oposicion')
           .get();
 
-      // Si el usuario no tiene nada guardado todavía, subimos la plantilla
+      // Si la carpeta está vacía, devolvemos la plantilla inicial y la guardamos en Firebase para que el usuario tenga algo con lo que empezar.
       if (snapshot.docs.isEmpty) {
         for (var cat in plantillaInicial) {
           await guardarCategoria(cat);
@@ -43,24 +42,27 @@ class MarcasService {
         return plantillaInicial;
       }
 
-      // Si ya tiene datos, los cargamos
+      // EL USUARIO YA TIENE DATOS GUARDADOS
       List<CategoriaMarca> listaCargada = [];
+      // Recorrer documento a documento lo que nos ha devuelto Firebase
       for (var doc in snapshot.docs) {
-        var datos = doc.data();
+        var datos = doc.data(); // Extraer el diccionario (Map) con la info
         
+        // recuperar el icono
         IconData iconoOriginal = plantillaInicial
             .firstWhere((element) => element.id == datos['id'], 
                       orElse: () => CategoriaMarca(id: 'err', nombre: '', icono: Icons.star, objetivo: 0.0))
             .icono;
 
+        // Convertir texto de Firebase en un objeto de Flutter y lo añadir a la lista final
         listaCargada.add(CategoriaMarca.fromFirebase(datos, iconoOriginal));
       }
       
       return listaCargada;
+
     } catch (e) {
       print("Error cargando marcas: $e");
       return plantillaInicial; 
     }
   }
 }
-// 5b4512d9-d6b9-4afc-bdfc-4fe8aa7b9bf5
