@@ -144,22 +144,26 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
         // El contenido de las pestañas
         body: TabBarView(
           children: [
-            // Pestaña 1: La lista de resumen
+            // Pestaña 1: La lista de resumen (sin botón flotante)
             _ListaResumen(categorias: misCategorias, colores: paletaColores),
+            
             // Pestaña 2: La cuadrícula de botones para entrar a los detalles
-            _GridCategorias(
-              categorias: misCategorias, 
-              colores: paletaColores,
-              alVolver: _cargarDatosReales, 
+            Scaffold(
+              backgroundColor: Colors.transparent, // Para no tapar el fondo de la app
+              body: _GridCategorias(
+                categorias: misCategorias, 
+                colores: paletaColores,
+                alVolver: _cargarDatosReales, 
+              ),
+              // Ponemos el botón flotante SOLO en este Scaffold interno
+              floatingActionButton: FloatingActionButton.extended(
+                onPressed: _mostrarDialogoNuevaCategoria,
+                backgroundColor: Colores.rojo,
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text("Añadir Prueba", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
             ),
           ],
-        ),
-        // --- BOTÓN FLOTANTE AÑADIDO ---
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _mostrarDialogoNuevaCategoria,
-          backgroundColor: Colores.rojo,
-          icon: const Icon(Icons.add, color: Colors.white),
-          label: const Text("Añadir Prueba", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
       ),
     );
