@@ -169,29 +169,36 @@ class _MapaPantallaState extends State<MapaPantalla> {
                   width: 150, 
                   height: 100, 
                   alignment: Alignment.bottomCenter, 
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end, 
-                    mainAxisSize: MainAxisSize.min,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.bottomCenter, // Alinea todo abajo
                     children: [
                       // --- ETIQUETA DE TEXTO LUGAR ---
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.85), 
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colores.rojo, width: 2), 
-                        ),
-                        child: Text(
-                          l.nombre,
-                          style: const TextStyle(
-                            fontSize: 12, 
-                            fontWeight: FontWeight.w900, 
-                            color: Colors.black 
+                      Positioned(
+                        bottom: 35, // Flota el texto por encima del icono
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.85), 
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colores.rojo, width: 2), 
                           ),
-                          textAlign: TextAlign.center,
+                          child: Text(
+                            l.nombre,
+                            style: const TextStyle(
+                              fontSize: 12, 
+                              fontWeight: FontWeight.w900, 
+                              color: Colors.black 
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
-                      const Icon(Icons.location_on, color: Colores.rojo, size: 45)
+                      // --- ICONO CHINCHETA ---
+                      const Positioned(
+                        bottom: -4, 
+                        child: Icon(Icons.location_on, color: Colores.rojo, size: 45),
+                      )
                     ],
                   ),
                 )).toList()

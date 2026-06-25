@@ -25,10 +25,16 @@ class TiempoDialog extends StatelessWidget {
         // Si isDecimal es true, abre el teclado numérico con punto. Si no, el teclado numérico simple.
         keyboardType: isDecimal ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.number,
         
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly, // Solo permite números 
-          LengthLimitingTextInputFormatter(2), //  max 2 caracteres 
-        ],
+        // Si es segundos permite decimal  Si es minutos, max 2 carac
+        inputFormatters: isDecimal 
+          ? [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')), // Permite números con un único punto decimal
+              LengthLimitingTextInputFormatter(5), // Máximo 5 caracteres para dar espacio a los decimales
+            ]
+          : [
+              FilteringTextInputFormatter.digitsOnly, // Solo permite números 
+              LengthLimitingTextInputFormatter(2), //  max 2 caracteres 
+            ],
         
         decoration: InputDecoration(
           labelText: label, // texto 

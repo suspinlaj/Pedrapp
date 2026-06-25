@@ -25,8 +25,8 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
     CategoriaMarca(id: "natacion_100", nombre: "Natacion 100", icono: Icons.pool, objetivo: 65.0),
     CategoriaMarca(id: "natacion_buceo", nombre: "Natacion buceo", icono: Icons.scuba_diving, objetivo: 25.0),
     CategoriaMarca(id: "pista_200", nombre: "Pista 200", icono: Icons.directions_run, objetivo: 26.0),
-    CategoriaMarca(id: "pista_1500", nombre: "Pista 1500", icono: Icons.directions_run, objetivo: 300.0),
     CategoriaMarca(id: "pista_1000", nombre: "Pista 1000", icono: Icons.directions_run, objetivo: 180.0),
+    CategoriaMarca(id: "pista_1500", nombre: "Pista 1500", icono: Icons.directions_run, objetivo: 300.0),
     CategoriaMarca(id: "ritmo_5000", nombre: "Ritmo 5000", icono: Icons.timer, objetivo: 1200.0),
     CategoriaMarca(id: "ritmo_10000", nombre: "Ritmo 10000", icono: Icons.timer, objetivo: 2400.0),
     CategoriaMarca(id: "cuerda", nombre: "Cuerda", icono: Icons.fitness_center, objetivo: 9.0),
@@ -124,42 +124,88 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
       length: 2, //  2 pestañas
       child: Scaffold(
         appBar: AppBar(
-          titleSpacing: 0, 
+          toolbarHeight: 70.0, 
           centerTitle: false,
-          title: const Text('Marcas oposicion', style: TextStyle(fontFamily: 'Titulo', color: Colors.white)),
+          
+          // --- FLECHA ATRAS ---
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+            onPressed: () => Navigator.pop(context),
+          ),
+          
+          // --- ALINEACIÓN TITULO CON FLECHA ---
+          title: const Padding(
+            padding: EdgeInsets.only(top: 10.0), 
+            child: Text(
+              'Marcas oposicion', 
+              style: TextStyle(
+                fontFamily: 'Titulo', 
+                color: Colors.white,
+                fontSize: 28,
+              ),
+            ),
+          ),
           backgroundColor: Colores.rojo,
           iconTheme: const IconThemeData(color: Colors.white),
-          // Las "pestañas" visuales debajo del título
-          bottom: const TabBar(
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
-            indicatorWeight: 4,
-            tabs: [
-              Tab(icon: Icon(Icons.leaderboard), text: "Resumen"),
-              Tab(icon: Icon(Icons.grid_view), text: "Categorías"),
-            ],
+          
+          // --- BORDE MENU OPCIONES ---
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(48.0), 
+            child: Stack(
+              alignment: Alignment.bottomCenter, 
+              children: [
+                // borde
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    height: 3,
+                    color: Colores.gris,
+                  ),
+                ),
+                //  línea blanca por encima
+                const TabBar(
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white70,
+                  indicatorColor: Colors.white, //  línea  pestaña activa
+                  indicatorWeight: 3, // Mismo grosor que la gris para taparla exacta
+                  tabs: [
+                    Tab(icon: Icon(Icons.leaderboard), text: "Resumen"),
+                    Tab(icon: Icon(Icons.grid_view), text: "Categorías"),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
         // El contenido de las pestañas
         body: TabBarView(
           children: [
-            // Pestaña 1: La lista de resumen
+            // Pestaña 1: La lista de resumen (sin botón flotante)
             _ListaResumen(categorias: misCategorias, colores: paletaColores),
+            
             // Pestaña 2: La cuadrícula de botones para entrar a los detalles
-            _GridCategorias(
-              categorias: misCategorias, 
-              colores: paletaColores,
-              alVolver: _cargarDatosReales, 
+            Scaffold(
+              backgroundColor: Colors.transparent, // Para no tapar el fondo de la app
+              body: _GridCategorias(
+                categorias: misCategorias, 
+                colores: paletaColores,
+                alVolver: _cargarDatosReales, 
+              ),
+              // Ponemos el botón flotante SOLO en este Scaffold interno
+              floatingActionButton: FloatingActionButton.extended(
+                onPressed: _mostrarDialogoNuevaCategoria,
+                backgroundColor: Colores.rojo,
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text("Añadir Prueba", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Colores.gris, width: 3),
+                ),
+              ),
             ),
           ],
-        ),
-        // --- BOTÓN FLOTANTE AÑADIDO ---
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _mostrarDialogoNuevaCategoria,
-          backgroundColor: Colores.rojo,
-          icon: const Icon(Icons.add, color: Colors.white),
-          label: const Text("Añadir Prueba", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
       ),
     );
@@ -178,39 +224,45 @@ class _ListaResumen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      physics: const BouncingScrollPhysics(), // Scroll con rebote suave 
-      padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 80), // Añadido bottom: 80
-      itemCount: categorias.length,
-      separatorBuilder: (context, index) => const Divider(color: Colores.rojo),
-      itemBuilder: (context, index) {
-        final cat = categorias[index];
-        final colorCategoria = colores[index % colores.length]; // Asigna color cíclicamente
-        final mejor = CategoriaMarca.formatearTiempo(cat.mejorMarca);
-        final objetivo = CategoriaMarca.formatearTiempo(cat.objetivo);
-        final estaLogrado = cat.progreso >= 1.0;
+    // --- Centrar y limitar ancho de la lista para que no quede deforme en tablets 
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600), 
+        child: ListView.separated(
+          physics: const BouncingScrollPhysics(), // Scroll con rebote suave 
+          padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 80),
+          itemCount: categorias.length,
+          separatorBuilder: (context, index) => const Divider(color: Colores.rojo),
+          itemBuilder: (context, index) {
+            final cat = categorias[index];
+            final colorCategoria = colores[index % colores.length]; 
+            final mejor = CategoriaMarca.formatearTiempo(cat.mejorMarca);
+            final objetivo = CategoriaMarca.formatearTiempo(cat.objetivo);
+            final estaLogrado = cat.progreso >= 1.0;
 
-        // Cada fila de la lista (Icono + Títulos + Tiempo derecho)
-        return ListTile(
-          leading: Icon(cat.icono, color: colorCategoria, size: 30), 
-          title: Text(cat.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          subtitle: Text("Objetivo: $objetivo"),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                mejor == "--:--" ? "Sin datos" : mejor, 
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: estaLogrado ? Colors.green : Colores.rojo)
+            // Cada fila de la lista (Icono + Títulos + Tiempo derecho)
+            return ListTile(
+              leading: Icon(cat.icono, color: colorCategoria, size: 30), 
+              title: Text(cat.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              subtitle: Text("Objetivo: $objetivo"),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    mejor == "--:--" ? "Sin datos" : mejor, 
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: estaLogrado ? Colors.green : Colores.rojo)
+                  ),
+                  // Si cumplió el objetivo, tick verde extra
+                  if (estaLogrado) const Padding(
+                    padding: EdgeInsets.only(left: 8.0),
+                    child: Icon(Icons.check_circle, color: Colors.green),
+                  ),
+                ],
               ),
-              // Si cumplió el objetivo, tick verde extra
-              if (estaLogrado) const Padding(
-                padding: EdgeInsets.only(left: 8.0),
-                child: Icon(Icons.check_circle, color: Colors.green),
-              ),
-            ],
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -229,15 +281,19 @@ class _GridCategorias extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // --- Calcular ancho y decidir las columnas ---
+    final anchoPantalla = MediaQuery.of(context).size.width;
+    final columnasDinamicas = anchoPantalla > 600 ? 5 : 3;
+
     return GridView.builder(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 80), // Añadido bottom: 80
+      padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 80), 
       // cuántas columnas y sus espacios
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3, // 3 columnas
-        crossAxisSpacing: 10, // Separación horizontal
-        mainAxisSpacing: 10, // Separación vertical
-        childAspectRatio: 1, // botones  cuadrados perfectos (1:1)
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columnasDinamicas, // --- RESPONSIVE
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10, 
+        childAspectRatio: 1, 
       ),
       itemCount: categorias.length,
       itemBuilder: (context, index) {
@@ -246,13 +302,15 @@ class _GridCategorias extends StatelessWidget {
 
         return Container(
           // Diseño del botón
+          // --- BORDE GRIS CUADROS ---
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colores.gris, width: 3),
             boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(2, 2))],
           ),
           child: Material(
             color: colorBoton,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(12), 
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () async {

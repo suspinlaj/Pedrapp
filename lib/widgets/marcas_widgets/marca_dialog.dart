@@ -41,8 +41,8 @@ class _DialogoMarcaState extends State<DialogoMarca> {
       
       minsController.text = minutos.toString();
       // Si los segundos son exactos (ej: 30.0), los muestra sin decimales (30). 
-      // Si tienen decimales (ej: 30.5), muestra un decimal.
-      secsController.text = segundos == segundos.truncateToDouble() ? segundos.toInt().toString() : segundos.toStringAsFixed(1);
+      // Si tienen decimales (ej: 30.55), muestra los decimales completos.
+      secsController.text = segundos == segundos.truncateToDouble() ? segundos.toInt().toString() : segundos.toString();
     }
   }
 
