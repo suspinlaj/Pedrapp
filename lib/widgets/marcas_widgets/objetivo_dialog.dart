@@ -34,7 +34,9 @@ class _ObjetivoDialogState extends State<ObjetivoDialog> {
     minsController.text = minutos.toString();
     
     // Rellenar segundos
-    secsController.text = segundos == segundos.truncateToDouble() ? segundos.toInt().toString() : segundos.toStringAsFixed(1);
+    // Si los segundos son exactos (ej: 30.0), los muestra sin decimales (30). 
+    // Si tienen decimales completos (ej: 30.55), los muestra todos sin recortar.
+    secsController.text = segundos == segundos.truncateToDouble() ? segundos.toInt().toString() : segundos.toString();
   }
 
   // dialog
