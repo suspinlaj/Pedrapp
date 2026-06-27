@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/features/mapa/mapa_pantalla.dart';
 import 'package:pedrapp/features/marcas/marcas_pantalla.dart';
+import 'package:pedrapp/features/pomodoro/pomodoro_pantalla.dart';
 
 class MenuPantalla extends StatelessWidget {
   const MenuPantalla({super.key});
@@ -92,7 +93,10 @@ final isLandscape =
                       colorFondo: Colors.white, 
                       colorTexto: Colores.gris,
                       // TODO: pantalla pomodoro
-                      onTap: () => _mostrarProximamente(context, 'Pomodoro'),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PomodoroPantalla()),
+                      ),
                     ),
 
                     const SizedBox(height: 25),
