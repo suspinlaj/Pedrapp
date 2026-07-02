@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geolocator/geolocator.dart'; // <-- NUEVA IMPORTACIÓN NECESARIA AQUI
+import 'package:geolocator/geolocator.dart'; 
+import 'package:shared_preferences/shared_preferences.dart'; // <-- NUEVA IMPORTACIÓN PARA LA MEMORIA
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/servicios/ubicacion_service.dart';
 
@@ -17,11 +18,56 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
   final MapController _mapController = MapController();
   final UbicacionService _ubicacionService = UbicacionService();
   
-  // Identificadores en Firebase (Puedes cambiarlos por vuestros nombres o IDs reales)
-  final String miId = "pedro"; 
-  final String suId = "pareja"; 
+  // Ahora miId cambia dinámicamente. Por defecto es Susana, pero la memoria lo cambiará.
+  String miId = "Susana"; 
 
   bool compartiendo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarIdentidad(); // Al abrir la pantalla, lee la memoria del móvil
+  }
+
+  // --- MAGIA DE LA MEMORIA ---
+  // Lee quién usó este móvil la última vez
+  void _cargarIdentidad() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      miId = prefs.getString('quien_soy') ?? "Susana";
+    });
+  }
+
+  // Diálogo para elegir quién eres sin tener que sacar 2 APKs
+  void _mostrarDialogoIdentidad() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("¿Quién usa este móvil?", style: TextStyle(fontFamily: 'Titulo', color: Colores.rojo)),
+        content: const Text("Elige quién eres para que vuestra chincheta no se pise en el mapa."),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('quien_soy', "Susana"); // Guarda Susana en memoria
+              setState(() => miId = "Susana");
+              Navigator.pop(context);
+            },
+            child: const Text("Soy Susana", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('quien_soy', "Pedro"); // Guarda Pedro en memoria
+              setState(() => miId = "Pedro");
+              Navigator.pop(context);
+            },
+            child: const Text("Soy Pedro", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
 
   // Botón para encender/apagar tu propio GPS
   void _toggleCompartir() async {
@@ -33,7 +79,6 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
         await _ubicacionService.iniciarSeguimiento(miId);
         setState(() => compartiendo = true);
         
-        // --- MAGIA NUEVA AQUI ---
         // Forzamos al GPS a darnos la posición EXACTA AHORA MISMO y movemos la cámara hacia ti
         Position posicionActual = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high
@@ -50,7 +95,6 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
   @override
   void dispose() {
     // Al salir de la pantalla, si quieres que deje de rastrear, lo apagas aquí. 
-    // Si quieres que siga rastreando aunque cambies de pestaña, borra esta línea.
     _ubicacionService.detenerSeguimiento();
     super.dispose();
   }
@@ -76,6 +120,23 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
         backgroundColor: Colores.rojo,
         iconTheme: const IconThemeData(color: Colors.white),
         shape: const Border(bottom: BorderSide(color: Colores.gris, width: 3)),
+        actions: [
+          // --- BOTÓN NUEVO PARA ELEGIR IDENTIDAD ---
+          IconButton(
+            icon: const Icon(Icons.person, color: Colors.white),
+            tooltip: "Elegir quién soy",
+            onPressed: () {
+              // Si estás compartiendo, no te deja cambiar de identidad para no liar a Firebase
+              if (compartiendo) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Apaga el GPS primero para cambiar de usuario."))
+                );
+              } else {
+                _mostrarDialogoIdentidad();
+              }
+            },
+          ),
+        ],
       ),
 
       // --- CUERPO PRINCIPAL ---
@@ -96,7 +157,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                   double? lng = datos['longitud'];
                   
                   if (lat != null && lng != null) {
-                    // Si el documento es el tuyo, pinta chincheta verde. Si es el de tu pareja, azul.
+                    // Si el documento es el tuyo, pinta chincheta verde. Si no, azul.
                     bool soyYo = doc.id == miId;
 
                     marcadoresEnDirecto.add(
@@ -119,7 +180,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                                   border: Border.all(color: soyYo ? Colors.green : Colors.blue, width: 2),
                                 ),
                                 child: Text(
-                                  soyYo ? "Yo" : "Pareja", // Nombre de la etiqueta
+                                  soyYo ? "Yo" : doc.id, 
                                   style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
                                 ),
                               ),
@@ -146,7 +207,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                 options: const MapOptions(
                   initialCenter: LatLng(40.416775, -3.703790), // Madrid por defecto
                   initialZoom: 12.0,
-                  // --- MAGIA AQUI: Bloqueamos la rotación del mapa ---
+                  // Bloqueamos la rotación del mapa
                   interactionOptions: InteractionOptions(
                     flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                   ),
@@ -161,6 +222,22 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
               );
             },
           ),
+          
+          // --- CHIVATO VISUAL DE IDENTIDAD (OPCIONAL) ---
+          // Una tarjetita arriba que te recuerda quién tiene puesto el móvil
+          Positioned(
+            top: 10,
+            left: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colores.gris, width: 2)
+              ),
+              child: Text("Móvil de: $miId", style: const TextStyle(fontWeight: FontWeight.bold, color: Colores.rojo)),
+            ),
+          )
         ],
       ),
       
