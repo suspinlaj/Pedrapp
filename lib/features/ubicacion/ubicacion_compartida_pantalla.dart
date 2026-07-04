@@ -21,7 +21,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
   String miId = "Susana"; 
   bool compartiendo = false;
   
-  // --- MEJORA 2: Bandera para controlar que el mapa solo se encuadre la primera vez al abrir ---
+  // Bandera para controlar que el mapa solo se encuadre la primera vez al abrir
   bool _primerEncuadreRealizado = false;
 
   @override
@@ -93,7 +93,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
     }
   }
 
-  // --- MEJORA 3: Función auxiliar para formatear la última conexión en texto legible ---
+  // Función auxiliar para formatear la última conexión en texto legible
   String _calcularTiempoTranscurrido(Timestamp? timestamp) {
     if (timestamp == null) return "Sin datos de conexión";
     
@@ -164,7 +164,6 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
             builder: (context, snapshot) {
               
               List<Marker> marcadoresEnDirecto = [];
-              String textoUltimaConexion = "Esperando señal de tu pareja...";
               LatLng? posicionPareja;
 
               if (snapshot.hasData) {
@@ -172,30 +171,31 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                   var datos = doc.data() as Map<String, dynamic>;
                   double? lat = datos['latitud'];
                   double? lng = datos['longitud'];
-                  Timestamp? ultimaAct = datos['ultima_actualizacion'] as Timestamp?;
                   
                   if (lat != null && lng != null) {
                     bool soyYo = doc.id == miId;
 
                     if (!soyYo) {
                       posicionPareja = LatLng(lat, lng);
-                      // --- MEJORA 3: Si es el documento de tu pareja, actualizamos el texto del historial ---
-                      textoUltimaConexion = "Última señal de ${doc.id}: ${_calcularTiempoTranscurrido(ultimaAct)}";
                     }
 
-                    // --- MEJORA 1: Reducimos la caja invisible del Marker a 50x80 y ajustamos el alignment exacto ---
                     marcadoresEnDirecto.add(
                       Marker(
                         point: LatLng(lat, lng),
-                        width: 100, // Ajustado más estrecho para evitar descolocación
-                        height: 80,  // Reducido el tamaño total de la caja del marcador
-                        alignment: Alignment.bottomCenter, // Anclaje perfecto en la base de la chincheta
+                        width: 100, 
+                        height: 80,  
+                        // --- ¡AQUÍ ESTÁ LA SOLUCIÓN! ---
+                        // En flutter_map se usa topCenter para forzar a la caja a desplazarse 
+                        // hacia arriba y que su base toque la coordenada de verdad.
+                        alignment: Alignment.topCenter, 
+                        
                         child: Stack(
                           clipBehavior: Clip.none,
+                          // El contenido interno sí va anclado abajo del todo de la caja
                           alignment: Alignment.bottomCenter,
                           children: [
                             Positioned(
-                              bottom: 42, // Ajustado para flotar justo encima de la chincheta de 45px
+                              bottom: 42, 
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
@@ -209,7 +209,6 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                                 ),
                               ),
                             ),
-                            // Quitamos el Transform.translate problemático y dejamos que se alinee nativamente al fondo
                             Icon(
                               Icons.location_on, 
                               color: soyYo ? Colors.green : Colors.blue, 
@@ -222,7 +221,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                   }
                 }
 
-                // --- MEJORA 2: Si encontramos la posición de tu pareja y es la primera vez que abre, movemos el mapa allí ---
+                // Auto-encuadre inicial hacia la pareja
                 if (posicionPareja != null && !_primerEncuadreRealizado) {
                   _primerEncuadreRealizado = true;
                   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -255,7 +254,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
           Positioned(
             top: 10,
             left: 10,
-            right: 10, // Se estira a lo ancho para dar espacio al texto del historial
+            right: 10, 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -271,7 +270,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                 ),
                 const SizedBox(height: 6),
                 
-                // --- MEJORA 3: Tarjeta nueva flotante con el historial de conexión en tiempo real ---
+                // Tarjeta 2: Historial de conexión en tiempo real
                 StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots(),
                   builder: (context, snapshot) {
