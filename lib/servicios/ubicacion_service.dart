@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // <-- Importado para el debugPrint
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -35,6 +36,7 @@ class UbicacionService {
     late LocationSettings configuracionUbicacion;
 
     if (Platform.isAndroid) {
+      // --- CORREGIDO AQUÍ: configuracionUbicacion ---
       configuracionUbicacion = AndroidSettings(
         accuracy: LocationAccuracy.high, // Precisión alta pero no máxima para ahorrar batería
         distanceFilter: 50, // SOLO actualiza si se mueve 50 metros (ahorro de batería brutal)
@@ -73,12 +75,19 @@ class UbicacionService {
       'latitud': posicion.latitude,
       'longitud': posicion.longitude,
       'ultima_actualizacion': FieldValue.serverTimestamp(),
+      'activo': true, // <-- NUEVO: Indica que está transmitiendo en vivo
     }, SetOptions(merge: true)); // merge hace que si no existe el doc, lo cree.
   }
 
   // Apaga el GPS cuando ya no queráis compartirlo para ahorrar batería
-  void detenerSeguimiento() {
+  // --- MODIFICADO: Ahora recibe el ID para marcar que ya no está activo ---
+  void detenerSeguimiento(String miIdUsuario) {
     _rastreador?.cancel();
     _rastreador = null;
+    
+    // Avisamos a Firebase de que este usuario ha apagado su transmisión
+    _db.collection('ubicaciones_seguridad').doc(miIdUsuario).update({
+      'activo': false,
+    }).catchError((e) => debugPrint("Error al desactivar: $e"));
   }
 }
