@@ -18,21 +18,33 @@ class UbicacionCompartidaPantalla extends StatefulWidget {
 }
 
 class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantalla> {
-  final MapController _mapController = MapController();
-  final UbicacionService _ubicacionService = UbicacionService();
   
-  String miId = "Susana"; 
-  bool compartiendo = false;
+  // CONTROLADORES Y VARIABLES DE ESTADO
   
-  // Bandera para controlar que el mapa solo se encuadre la primera vez al abrir
+  final MapController _mapController = MapController(); // Permite mover la cámara y el zoom por código
+  final UbicacionService _ubicacionService = UbicacionService(); // Instancia del servicio que gestiona el GPS nativo
+  
+  String miId = "Susana"; // Identificador del usuario actual (se sobreescribe con la memoria)
+  bool compartiendo = false; // Estado del botón -> true si el GPS está encendido transmitiendo, false si está apagado
+  
+  // Evita que el mapa encuadre al otro todo el tiempo
   bool _primerEncuadreRealizado = false;
+
 
   @override
   void initState() {
     super.initState();
-    _cargarIdentidad(); 
+    _cargarIdentidad(); // leer disco duro para saber quién es
   }
 
+  @override
+  void dispose() {
+    // apaga el GPS para bateria movil
+    _ubicacionService.detenerSeguimiento(miId);
+    super.dispose();
+  }
+
+  // Cargar la identidad guardada 
   void _cargarIdentidad() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -40,7 +52,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
     });
   }
 
-  // --- MODIFICADO: Ahora abre tu nuevo componente DialogIdentidad estilizado ---
+  // diálogo  para cambiar usuario 
   void _mostrarDialogoIdentidad() {
     showDialog(
       context: context,
@@ -48,38 +60,40 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
         identidadActual: miId,
         onSave: (nuevaIdentidad) async {
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('quien_soy', nuevaIdentidad); // Guarda la selección en memoria
+          await prefs.setString('quien_soy', nuevaIdentidad); // Guarda la nueva selección en memoria permanente
           setState(() {
             miId = nuevaIdentidad;
-            _primerEncuadreRealizado = false; // Reiniciamos para que busque al otro usuario
+            _primerEncuadreRealizado = false; // Resetea el encuadre para buscar la ubicación de la nueva persona
           });
         },
       ),
     );
   }
 
+  // Enciende el rastreador en vivo o lo apaga avisando a Firebase
   void _toggleCompartir() async {
     if (compartiendo) {
-      // --- MODIFICADO: Le pasamos el miId para marcar inactivo en Firebase ---
-      _ubicacionService.detenerSeguimiento(miId);
+      _ubicacionService.detenerSeguimiento(miId); // Detiene el flujo del GPS y pone 'activo: false' en Firebase
       setState(() => compartiendo = false);
     } else {
       try {
-        await _ubicacionService.iniciarSeguimiento(miId);
+        await _ubicacionService.iniciarSeguimiento(miId); // Pide permisos, activa el servicio en segundo plano y pone 'activo: true'
         setState(() => compartiendo = true);
         
+        // mueve camara del mapa a posición actual
         Position posicionActual = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high
         );
         _mapController.move(LatLng(posicionActual.latitude, posicionActual.longitude), 15.0);
         
       } catch (e) {
+        // barra inferior error en caso de que falten permisos o el GPS esté apagado
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
 
-  // Función auxiliar para formatear la última conexión en texto legible
+  // Transforma el timestamp del servidor de Firebase en un formato entendible 
   String _calcularTiempoTranscurrido(Timestamp? timestamp) {
     if (timestamp == null) return "Sin datos de conexión";
     
@@ -101,15 +115,9 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
   }
 
   @override
-  void dispose() {
-    // --- MODIFICADO: Le pasamos el miId al apagar al salir de la pantalla ---
-    _ubicacionService.detenerSeguimiento(miId);
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // --- BARRA SUPERIOR ---
       appBar: AppBar(
         titleSpacing: 0,
         centerTitle: false,
@@ -119,6 +127,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
         ),
         title: const Padding(
           padding: EdgeInsets.only(top: 10.0),
+          // TITULO
           child: Text(
             'Seguridad',
             style: TextStyle(fontFamily: 'Titulo', color: Colors.white, fontSize: 28),
@@ -128,6 +137,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
         iconTheme: const IconThemeData(color: Colors.white),
         shape: const Border(bottom: BorderSide(color: Colores.gris, width: 3)),
         actions: [
+          // Botón del muñequito para acceder al selector de identidad
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
             tooltip: "Elegir quién soy",
@@ -144,8 +154,11 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
         ],
       ),
 
+      // --- CUERPO PRINCIPAL ---
       body: Stack(
         children: [
+          
+          // FONDO ->  escucha en tiempo real de FirebaseFirestore
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots(),
             builder: (context, snapshot) {
@@ -154,6 +167,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
               LatLng? posicionPareja;
 
               if (snapshot.hasData) {
+                // Bucle que lee las ubicaciones disponibles en la base de datos
                 for (var doc in snapshot.data!.docs) {
                   var datos = doc.data() as Map<String, dynamic>;
                   double? lat = datos['latitud'];
@@ -163,16 +177,15 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                     bool soyYo = doc.id == miId;
 
                     if (!soyYo) {
-                      posicionPareja = LatLng(lat, lng);
+                      posicionPareja = LatLng(lat, lng); // Identifica las coordenadas del otro para el auto-zoom
                     }
 
+                    // Añade una chincheta a la lista del mapa
                     marcadoresEnDirecto.add(
                       Marker(
                         point: LatLng(lat, lng),
                         width: 100, 
                         height: 80,  
-                        // En flutter_map se usa topCenter para forzar a la caja a desplazarse 
-                        // hacia arriba y que su base toque la coordenada de verdad.
                         alignment: Alignment.topCenter, 
                         child: MarcadorUbicacion(
                           nombre: doc.id,
@@ -184,20 +197,22 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                   }
                 }
 
-                // Auto-encuadre inicial hacia la pareja
+                // Lauto-encuadre inicial hacia la otra persona al abrir la pantalla
                 if (posicionPareja != null && !_primerEncuadreRealizado) {
                   _primerEncuadreRealizado = true;
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _mapController.move(posicionPareja!, 14.5);
+                    _mapController.move(posicionPareja!, 13.0); // zoom mapa
                   });
                 }
               }
 
+              // mapa base y  pins
               return FlutterMap(
                 mapController: _mapController,
                 options: const MapOptions(
-                  initialCenter: LatLng(40.416775, -3.703790), 
+                  initialCenter: LatLng(40.416775, -3.703790), // Madrid por defecto si no hay datos 
                   initialZoom: 12.0,
+                  // Bloquear que se peuda girar el mapa
                   interactionOptions: InteractionOptions(
                     flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                   ),
@@ -207,13 +222,13 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                     urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
                     subdomains: const ['a', 'b', 'c', 'd'],
                   ),
-                  MarkerLayer(markers: marcadoresEnDirecto),
+                  MarkerLayer(markers: marcadoresEnDirecto), // Dibujar capa marcadores 
                 ],
               );
             },
           ),
           
-          // --- TARJETAS SUPERIORES (CHIVATOS DE ESTADO) ---
+          // BOCADDILLITOS DE HISTORIAL Y AVISO DE DESCONEXIÓN
           Positioned(
             top: 10,
             left: 10,
@@ -223,7 +238,6 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
               children: [
                 const SizedBox(height: 6),
                 
-                // Invocamos a la tarjeta del historial aislada (que ahora dibuja el bocadillo dinámico abajo)
                 TarjetaHistorial(
                   miId: miId,
                   calcularTiempoFn: _calcularTiempoTranscurrido,
@@ -234,6 +248,7 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
         ],
       ),
       
+      // --- BOTÓN PONER UBICACION ---
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _toggleCompartir,
         backgroundColor: compartiendo ? Colores.amarillo : Colores.rojo,

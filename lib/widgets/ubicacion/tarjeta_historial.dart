@@ -3,8 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pedrapp/core/colores.dart';
 
 class TarjetaHistorial extends StatelessWidget {
-  final String miId;
-  final String Function(Timestamp?) calcularTiempoFn;
+  final String miId; // Para saber quiénes somos y buscar al "otro"
+  final String Function(Timestamp?) calcularTiempoFn; // Función que formatea la hora traída desde la pantalla principal
 
   const TarjetaHistorial({
     super.key,
@@ -14,23 +14,31 @@ class TarjetaHistorial extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Escucha en tiempo real a Firebase. 
+    //Si el tiempo o el estado de la otra persona cambia,  la tarjeta se actualiza 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots(),
       builder: (context, snapshot) {
+        
+        // Valor por defecto mientras carga o si no hay datos en Firebase
         String textoConexionDinamico = "Buscando conexión...";
-        bool parejaActiva = true; // Por defecto asumimos que está compartiendo
+        bool parejaActiva = true; 
         String nombrePareja = "tu pareja";
         
         if (snapshot.hasData) {
           textoConexionDinamico = "Tu pareja no ha iniciado el GPS hoy.";
+          
+          // Recorrer  documentos buscando el que no sea el dle usuario actual
           for (var doc in snapshot.data!.docs) {
             if (doc.id != miId) {
               nombrePareja = doc.id;
               var datos = doc.data() as Map<String, dynamic>;
               Timestamp? ultimaAct = datos['ultima_actualizacion'] as Timestamp?;
               
-              // Leemos el nuevo estado de activación de Firebase (si no existe, asumimos false)
+              //  para saber si le dio al botón de apagar la otra persona
               parejaActiva = datos['activo'] ?? false;
+              
+              // Texto de historial conexion
               textoConexionDinamico = "Señal de $nombrePareja: ${calcularTiempoFn(ultimaAct)}";
             }
           }
@@ -40,7 +48,8 @@ class TarjetaHistorial extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Bocadillito 1: El historial clásico que se ve SIEMPRE
+            
+            // BOCADILLO PRINCIPAL (El historial )
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -64,10 +73,10 @@ class TarjetaHistorial extends StatelessWidget {
               ),
             ),
             
-            // --- NUEVO BOCADILLITO DE AVISO DESCONECTADO ---
-            // Solo aparece si snapshot tiene datos y sabemos con certeza que la pareja no está activa
+            // BOCADILLO SECUNDARIO (Aviso de GPS apagado)
+            // Solo se dibuja si  'activo' es falso.
             if (snapshot.hasData && !parejaActiva) ...[
-              const SizedBox(height: 6), // Separación entre ambos bocadillos
+              const SizedBox(height: 6), 
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -79,12 +88,13 @@ class TarjetaHistorial extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.location_off, color: Colores.gris, size: 16),
+                    const Icon(Icons.location_off, color: Colores.gris, size: 16),
                     const SizedBox(width: 6),
                     Flexible(
+                      // FRASE NO ACTIVO
                       child: Text(
                         "$nombrePareja no está compartiendo su ubicación ahora mismo.", 
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold, 
                           fontSize: 12, 
                           color: Colores.gris

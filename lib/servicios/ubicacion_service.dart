@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // <-- Importado para el debugPrint
+import 'package:flutter/foundation.dart'; 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -13,13 +13,13 @@ class UbicacionService {
     bool servicioHabilitado;
     LocationPermission permiso;
 
-    // 1. Comprueba si el GPS del móvil está encendido
+    // Comprueba si el GPS del móvil está encendido
     servicioHabilitado = await Geolocator.isLocationServiceEnabled();
     if (!servicioHabilitado) {
       return Future.error('El GPS está desactivado.');
     }
 
-    // 2. Comprueba y pide los permisos necesarios
+    // Comprueba y pide los permisos necesarios
     permiso = await Geolocator.checkPermission();
     if (permiso == LocationPermission.denied) {
       permiso = await Geolocator.requestPermission();
@@ -32,15 +32,14 @@ class UbicacionService {
       return Future.error('Los permisos están denegados permanentemente. Ve a ajustes.');
     }
 
-    // 3. Configuración inteligente para ahorrar batería y funcionar en segundo plano
+    // Configuración para ahorrar batería y funcionar en segundo plano
     late LocationSettings configuracionUbicacion;
 
     if (Platform.isAndroid) {
-      // --- CORREGIDO AQUÍ: configuracionUbicacion ---
       configuracionUbicacion = AndroidSettings(
         accuracy: LocationAccuracy.high, // Precisión alta pero no máxima para ahorrar batería
-        distanceFilter: 50, // SOLO actualiza si se mueve 50 metros (ahorro de batería brutal)
-        // Esto es la magia para que funcione con la pantalla bloqueada o Waze abierto
+        distanceFilter: 50, // solo actualiza si se mueve 50 metros (ahorro de batería)
+        //  para que funcione con la pantalla bloqueada o Waze abierto
         foregroundNotificationConfig: const ForegroundNotificationConfig(
           notificationText: "Compartiendo ubicación por seguridad",
           notificationTitle: "Pedrapp GPS Activo",
@@ -52,7 +51,7 @@ class UbicacionService {
         accuracy: LocationAccuracy.high,
         distanceFilter: 50,
         pauseLocationUpdatesAutomatically: true,
-        allowBackgroundLocationUpdates: true, // Magia para iOS
+        allowBackgroundLocationUpdates: true, 
       );
     } else {
       configuracionUbicacion = const LocationSettings(
@@ -61,7 +60,7 @@ class UbicacionService {
       );
     }
 
-    // 4. Empieza a escuchar el GPS y subirlo a Firebase automáticamente
+    // Escuchar GPS y subirlo a Firebase automáticamente
     _rastreador = Geolocator.getPositionStream(locationSettings: configuracionUbicacion).listen(
       (Position posicion) {
         _subirUbicacionAFirebase(miIdUsuario, posicion);
@@ -69,23 +68,22 @@ class UbicacionService {
     );
   }
 
-  // Sube las coordenadas a Firebase en la colección "ubicaciones_seguridad"
+  // Subir coordenadas a Firebase 
   Future<void> _subirUbicacionAFirebase(String id, Position posicion) async {
     await _db.collection('ubicaciones_seguridad').doc(id).set({
       'latitud': posicion.latitude,
       'longitud': posicion.longitude,
       'ultima_actualizacion': FieldValue.serverTimestamp(),
-      'activo': true, // <-- NUEVO: Indica que está transmitiendo en vivo
+      'activo': true, // Indica que está transmitiendo en vivo
     }, SetOptions(merge: true)); // merge hace que si no existe el doc, lo cree.
   }
 
-  // Apaga el GPS cuando ya no queráis compartirlo para ahorrar batería
-  // --- MODIFICADO: Ahora recibe el ID para marcar que ya no está activo ---
+  // Apaga el GPS cuando ya no se quiera compartir para ahorrar batería
   void detenerSeguimiento(String miIdUsuario) {
     _rastreador?.cancel();
     _rastreador = null;
     
-    // Avisamos a Firebase de que este usuario ha apagado su transmisión
+    // Avisar a Firebase de que el usuario ha apagado su transmisión
     _db.collection('ubicaciones_seguridad').doc(miIdUsuario).update({
       'activo': false,
     }).catchError((e) => debugPrint("Error al desactivar: $e"));
