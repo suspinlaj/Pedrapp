@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart'; 
-import 'package:shared_preferences/shared_preferences.dart'; // <-- NUEVA IMPORTACIÓN PARA LA MEMORIA
+import 'package:shared_preferences/shared_preferences.dart'; 
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/servicios/ubicacion_service.dart';
 
@@ -18,19 +18,18 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
   final MapController _mapController = MapController();
   final UbicacionService _ubicacionService = UbicacionService();
   
-  // Ahora miId cambia dinámicamente. Por defecto es Susana, pero la memoria lo cambiará.
   String miId = "Susana"; 
-
   bool compartiendo = false;
+  
+  // --- MEJORA 2: Bandera para controlar que el mapa solo se encuadre la primera vez al abrir ---
+  bool _primerEncuadreRealizado = false;
 
   @override
   void initState() {
     super.initState();
-    _cargarIdentidad(); // Al abrir la pantalla, lee la memoria del móvil
+    _cargarIdentidad(); 
   }
 
-  // --- MAGIA DE LA MEMORIA ---
-  // Lee quién usó este móvil la última vez
   void _cargarIdentidad() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -38,7 +37,6 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
     });
   }
 
-  // Diálogo para elegir quién eres sin tener que sacar 2 APKs
   void _mostrarDialogoIdentidad() {
     showDialog(
       context: context,
@@ -49,8 +47,11 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
           TextButton(
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('quien_soy', "Susana"); // Guarda Susana en memoria
-              setState(() => miId = "Susana");
+              await prefs.setString('quien_soy', "Susana"); 
+              setState(() {
+                miId = "Susana";
+                _primerEncuadreRealizado = false; // Reiniciamos para que busque al otro usuario
+              });
               Navigator.pop(context);
             },
             child: const Text("Soy Susana", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
@@ -58,8 +59,11 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
           TextButton(
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('quien_soy', "Pedro"); // Guarda Pedro en memoria
-              setState(() => miId = "Pedro");
+              await prefs.setString('quien_soy', "Pedro"); 
+              setState(() {
+                miId = "Pedro";
+                _primerEncuadreRealizado = false; // Reiniciamos para que busque al otro usuario
+              });
               Navigator.pop(context);
             },
             child: const Text("Soy Pedro", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
@@ -69,7 +73,6 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
     );
   }
 
-  // Botón para encender/apagar tu propio GPS
   void _toggleCompartir() async {
     if (compartiendo) {
       _ubicacionService.detenerSeguimiento();
@@ -79,22 +82,40 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
         await _ubicacionService.iniciarSeguimiento(miId);
         setState(() => compartiendo = true);
         
-        // Forzamos al GPS a darnos la posición EXACTA AHORA MISMO y movemos la cámara hacia ti
         Position posicionActual = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high
         );
         _mapController.move(LatLng(posicionActual.latitude, posicionActual.longitude), 15.0);
         
       } catch (e) {
-        // Muestra error si no da permisos
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
 
+  // --- MEJORA 3: Función auxiliar para formatear la última conexión en texto legible ---
+  String _calcularTiempoTranscurrido(Timestamp? timestamp) {
+    if (timestamp == null) return "Sin datos de conexión";
+    
+    final DateTime horaFirebase = timestamp.toDate();
+    final DateTime ahora = DateTime.now();
+    final Duration diferencia = ahora.difference(horaFirebase);
+    
+    final String horaStr = "${horaFirebase.hour.toString().padLeft(2, '0')}:${horaFirebase.minute.toString().padLeft(2, '0')}";
+
+    if (diferencia.inMinutes < 1) {
+      return "En directo ($horaStr)";
+    } else if (diferencia.inMinutes < 60) {
+      return "Hace ${diferencia.inMinutes} min ($horaStr)";
+    } else if (diferencia.inDays < 1) {
+      return "Hace ${diferencia.inHours} horas ($horaStr)";
+    } else {
+      return "${horaFirebase.day}/${horaFirebase.month} a las $horaStr";
+    }
+  }
+
   @override
   void dispose() {
-    // Al salir de la pantalla, si quieres que deje de rastrear, lo apagas aquí. 
     _ubicacionService.detenerSeguimiento();
     super.dispose();
   }
@@ -102,7 +123,6 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // --- BARRA SUPERIOR ---
       appBar: AppBar(
         titleSpacing: 0,
         centerTitle: false,
@@ -121,12 +141,10 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
         iconTheme: const IconThemeData(color: Colors.white),
         shape: const Border(bottom: BorderSide(color: Colores.gris, width: 3)),
         actions: [
-          // --- BOTÓN NUEVO PARA ELEGIR IDENTIDAD ---
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
             tooltip: "Elegir quién soy",
             onPressed: () {
-              // Si estás compartiendo, no te deja cambiar de identidad para no liar a Firebase
               if (compartiendo) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Apaga el GPS primero para cambiar de usuario."))
@@ -139,39 +157,45 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
         ],
       ),
 
-      // --- CUERPO PRINCIPAL ---
       body: Stack(
         children: [
-          // StreamBuilder escucha la base de datos en tiempo real
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots(),
             builder: (context, snapshot) {
               
               List<Marker> marcadoresEnDirecto = [];
+              String textoUltimaConexion = "Esperando señal de tu pareja...";
+              LatLng? posicionPareja;
 
               if (snapshot.hasData) {
-                // Recorre todos los documentos (el tuyo y el de tu pareja)
                 for (var doc in snapshot.data!.docs) {
                   var datos = doc.data() as Map<String, dynamic>;
                   double? lat = datos['latitud'];
                   double? lng = datos['longitud'];
+                  Timestamp? ultimaAct = datos['ultima_actualizacion'] as Timestamp?;
                   
                   if (lat != null && lng != null) {
-                    // Si el documento es el tuyo, pinta chincheta verde. Si no, azul.
                     bool soyYo = doc.id == miId;
 
+                    if (!soyYo) {
+                      posicionPareja = LatLng(lat, lng);
+                      // --- MEJORA 3: Si es el documento de tu pareja, actualizamos el texto del historial ---
+                      textoUltimaConexion = "Última señal de ${doc.id}: ${_calcularTiempoTranscurrido(ultimaAct)}";
+                    }
+
+                    // --- MEJORA 1: Reducimos la caja invisible del Marker a 50x80 y ajustamos el alignment exacto ---
                     marcadoresEnDirecto.add(
                       Marker(
                         point: LatLng(lat, lng),
-                        width: 150,
-                        height: 100,
-                        alignment: Alignment.bottomCenter,
+                        width: 100, // Ajustado más estrecho para evitar descolocación
+                        height: 80,  // Reducido el tamaño total de la caja del marcador
+                        alignment: Alignment.bottomCenter, // Anclaje perfecto en la base de la chincheta
                         child: Stack(
                           clipBehavior: Clip.none,
                           alignment: Alignment.bottomCenter,
                           children: [
                             Positioned(
-                              bottom: 35,
+                              bottom: 42, // Ajustado para flotar justo encima de la chincheta de 45px
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
@@ -181,17 +205,15 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                                 ),
                                 child: Text(
                                   soyYo ? "Yo" : doc.id, 
-                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.black),
                                 ),
                               ),
                             ),
-                            Transform.translate(
-                              offset: const Offset(0, 5),
-                              child: Icon(
-                                Icons.location_on, 
-                                color: soyYo ? Colors.green : Colors.blue, 
-                                size: 45
-                              ),
+                            // Quitamos el Transform.translate problemático y dejamos que se alinee nativamente al fondo
+                            Icon(
+                              Icons.location_on, 
+                              color: soyYo ? Colors.green : Colors.blue, 
+                              size: 45
                             )
                           ],
                         ),
@@ -199,15 +221,21 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
                     );
                   }
                 }
+
+                // --- MEJORA 2: Si encontramos la posición de tu pareja y es la primera vez que abre, movemos el mapa allí ---
+                if (posicionPareja != null && !_primerEncuadreRealizado) {
+                  _primerEncuadreRealizado = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _mapController.move(posicionPareja!, 14.5);
+                  });
+                }
               }
 
-              // Pinta el mapa con los marcadores que haya encontrado en Firebase
               return FlutterMap(
                 mapController: _mapController,
                 options: const MapOptions(
-                  initialCenter: LatLng(40.416775, -3.703790), // Madrid por defecto
+                  initialCenter: LatLng(40.416775, -3.703790), 
                   initialZoom: 12.0,
-                  // Bloqueamos la rotación del mapa
                   interactionOptions: InteractionOptions(
                     flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                   ),
@@ -223,25 +251,73 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
             },
           ),
           
-          // --- CHIVATO VISUAL DE IDENTIDAD (OPCIONAL) ---
-          // Una tarjetita arriba que te recuerda quién tiene puesto el móvil
+          // --- TARJETAS SUPERIORES (CHIVATOS DE ESTADO) ---
           Positioned(
             top: 10,
             left: 10,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colores.gris, width: 2)
-              ),
-              child: Text("Móvil de: $miId", style: const TextStyle(fontWeight: FontWeight.bold, color: Colores.rojo)),
+            right: 10, // Se estira a lo ancho para dar espacio al texto del historial
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Tarjeta 1: Quién tiene el móvil configurado
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colores.gris, width: 2)
+                  ),
+                  child: Text("Móvil de: $miId", style: const TextStyle(fontWeight: FontWeight.bold, color: Colores.rojo)),
+                ),
+                const SizedBox(height: 6),
+                
+                // --- MEJORA 3: Tarjeta nueva flotante con el historial de conexión en tiempo real ---
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots(),
+                  builder: (context, snapshot) {
+                    String textoConexionDinamico = "Buscando conexión...";
+                    
+                    if (snapshot.hasData) {
+                      textoConexionDinamico = "Tu pareja no ha iniciado el GPS hoy.";
+                      for (var doc in snapshot.data!.docs) {
+                        if (doc.id != miId) {
+                          var datos = doc.data() as Map<String, dynamic>;
+                          Timestamp? ultimaAct = datos['ultima_actualizacion'] as Timestamp?;
+                          textoConexionDinamico = "Señal de ${doc.id}: ${_calcularTiempoTranscurrido(ultimaAct)}";
+                        }
+                      }
+                    }
+                    
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.95),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade300, width: 2),
+                        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))]
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.history, color: Colors.blue, size: 16),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              textoConexionDinamico, 
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Colors.black87)
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                ),
+              ],
             ),
           )
         ],
       ),
       
-      // --- BOTÓN PARA COMPARTIR UBICACIÓN ---
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _toggleCompartir,
         backgroundColor: compartiendo ? Colors.green : Colores.rojo,
