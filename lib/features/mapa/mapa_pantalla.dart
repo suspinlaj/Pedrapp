@@ -102,9 +102,9 @@ class _MapaPantallaState extends State<MapaPantalla> {
     showDialog(
       context: context,
       builder: (context) => DialogEliminar(
-        titulo: 'Eliminar Lugar', // <-- El título del diálogo
-        nombreItem: _misLugares[index].nombre, // <-- El nombre que va en negrita
-        finalMensaje: 'de tu mapa?', // <-- El texto que va después del nombre
+        titulo: 'Eliminar Lugar', //  título del diálogo
+        nombreItem: _misLugares[index].nombre, // nombre que va en negrita
+        finalMensaje: 'de tu mapa?', // texto que va después del nombre
         onConfirm: () async {
           setState(() => _misLugares.removeAt(index));
           await LugarService.guardar(_misLugares);
@@ -166,16 +166,17 @@ class _MapaPantallaState extends State<MapaPantalla> {
               MarkerLayer(
                 markers: _misLugares.map((l) => Marker(
                   point: LatLng(l.latitud, l.longitud), 
-                  width: 150, 
-                  height: 100, 
-                  alignment: Alignment.bottomCenter, 
+                  // Reducimos la caja invisible del marcador para que no desplace el pin al quitar zoom
+                  width: 100, 
+                  height: 80, 
+                  alignment: Alignment.topCenter, 
                   child: Stack(
                     clipBehavior: Clip.none,
                     alignment: Alignment.bottomCenter, // Alinea todo abajo
                     children: [
                       // --- ETIQUETA DE TEXTO LUGAR ---
                       Positioned(
-                        bottom: 35, // Flota el texto por encima del icono
+                        bottom: 42, // Se ajusta para flotar perfectamente sobre el icono de 45px
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
@@ -195,10 +196,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
                         ),
                       ),
                       // --- ICONO CHINCHETA ---
-                      const Positioned(
-                        bottom: -4, 
-                        child: Icon(Icons.location_on, color: Colores.rojo, size: 45),
-                      )
+                      const Icon(Icons.location_on, color: Colores.rojo, size: 45),
                     ],
                   ),
                 )).toList()

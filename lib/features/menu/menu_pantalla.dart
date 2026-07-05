@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/features/mapa/mapa_pantalla.dart';
 import 'package:pedrapp/features/marcas/marcas_pantalla.dart';
+import 'package:pedrapp/features/ubicacion/ubicacion_compartida_pantalla.dart';
 
 class MenuPantalla extends StatelessWidget {
   const MenuPantalla({super.key});
@@ -107,6 +108,21 @@ final isLandscape =
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const MarcasPantalla()),
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    // --- UBICACIÓN ---
+                    _buildFlatButton(
+                      context,
+                      titulo: 'UBICACIÓN',
+                      icono: Icons.location_on,
+                      colorFondo: Colors.white, 
+                      colorTexto: Colores.gris,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const UbicacionCompartidaPantalla()),
                       ),
                     ),
                   ],
