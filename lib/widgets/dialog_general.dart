@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
 
+
 class DialogGeneral extends StatelessWidget {
   final String title;    // Título del diálogo
   final Widget content;  // Contenido dinámico (campos de texto, mensajes, etc.)
@@ -19,8 +20,9 @@ class DialogGeneral extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    
     // Ajusta los tamaños de fuente dinámicamente según el ancho de pantalla
-    final screenWidth = MediaQuery.of(context).size.width;
     final titleSize = screenWidth < 350 ? 24.0 : 30.0;
     final btnSize = screenWidth < 350 ? 18.0 : 25.0;
 
@@ -53,7 +55,7 @@ class DialogGeneral extends StatelessWidget {
         ),
         // --- BOTÓN GUARDAR ---
         TextButton(
-          onPressed: onSave, // Ejecuta la lógica guardada pasada por parámetro
+          onPressed: onSave, 
           child: Text(
             saveText, 
             style: TextStyle(

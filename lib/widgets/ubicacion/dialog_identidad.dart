@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/widgets/dialog_general.dart';
 
+
 class DialogIdentidad extends StatefulWidget {
   final String identidadActual; // Recibe el id que está actualmente guardado (Pedro o Susana)
   final Function(String) onSave; // Devuelve el nuevo nombre seleccionado al guardar

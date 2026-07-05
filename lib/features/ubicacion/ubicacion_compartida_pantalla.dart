@@ -30,11 +30,14 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
   // Evita que el mapa encuadre al otro todo el tiempo
   bool _primerEncuadreRealizado = false;
 
+  // guardar conexión en vivo para no abrir y cerrar  conexciones todo e rato
+  late final Stream<QuerySnapshot> _ubicacionesStream;
 
   @override
   void initState() {
     super.initState();
     _cargarIdentidad(); // leer disco duro para saber quién es
+    _ubicacionesStream = FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots();
   }
 
   @override
@@ -157,75 +160,74 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
       // --- CUERPO PRINCIPAL ---
       body: Stack(
         children: [
-          
-          // FONDO ->  escucha en tiempo real de FirebaseFirestore
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots(),
-            builder: (context, snapshot) {
+          FlutterMap(
+            mapController: _mapController,
+            options: const MapOptions(
+              initialCenter: LatLng(40.416775, -3.703790), // Madrid por defecto si no hay datos 
+              initialZoom: 12.0,
+              // Bloquear que se peuda girar el mapa
+              interactionOptions: InteractionOptions(
+                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              ),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                subdomains: const ['a', 'b', 'c', 'd'],
+              ),
               
-              List<Marker> marcadoresEnDirecto = [];
-              LatLng? posicionPareja;
-
-              if (snapshot.hasData) {
-                // Bucle que lee las ubicaciones disponibles en la base de datos
-                for (var doc in snapshot.data!.docs) {
-                  var datos = doc.data() as Map<String, dynamic>;
-                  double? lat = datos['latitud'];
-                  double? lng = datos['longitud'];
+              // FONDO -> escucha en tiempo real de FirebaseFirestore
+              StreamBuilder<QuerySnapshot>(
+                stream: _ubicacionesStream, 
+                builder: (context, snapshot) {
                   
-                  if (lat != null && lng != null) {
-                    bool soyYo = doc.id == miId;
+                  List<Marker> marcadoresEnDirecto = [];
+                  LatLng? posicionPareja;
 
-                    if (!soyYo) {
-                      posicionPareja = LatLng(lat, lng); // Identifica las coordenadas del otro para el auto-zoom
+                  if (snapshot.hasData) {
+                    // Bucle que lee las ubicaciones disponibles en la base de datos
+                    for (var doc in snapshot.data!.docs) {
+                      var datos = doc.data() as Map<String, dynamic>;
+                      double? lat = datos['latitud'];
+                      double? lng = datos['longitud'];
+                      
+                      if (lat != null && lng != null) {
+                        bool soyYo = doc.id == miId;
+
+                        if (!soyYo) {
+                          posicionPareja = LatLng(lat, lng); // Identifica las coordenadas del otro para el auto-zoom
+                        }
+
+                        // Añade una chincheta a la lista del mapa
+                        marcadoresEnDirecto.add(
+                          Marker(
+                            point: LatLng(lat, lng),
+                            width: 100, 
+                            height: 80,  
+                            alignment: Alignment.topCenter, 
+                            child: MarcadorUbicacion(
+                              nombre: doc.id,
+                              soyYo: soyYo,
+                              colorTema: soyYo ? Colores.amarillo : Colores.rojo,
+                            ),
+                          )
+                        );
+                      }
                     }
 
-                    // Añade una chincheta a la lista del mapa
-                    marcadoresEnDirecto.add(
-                      Marker(
-                        point: LatLng(lat, lng),
-                        width: 100, 
-                        height: 80,  
-                        alignment: Alignment.topCenter, 
-                        child: MarcadorUbicacion(
-                          nombre: doc.id,
-                          soyYo: soyYo,
-                          colorTema: soyYo ? Colores.amarillo : Colores.rojo,
-                        ),
-                      )
-                    );
+                    // auto-encuadre inicial hacia la otra persona al abrir la pantalla
+                    if (posicionPareja != null && !_primerEncuadreRealizado) {
+                      _primerEncuadreRealizado = true;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _mapController.move(posicionPareja!, 13.0); // zoom mapa
+                      });
+                    }
                   }
-                }
 
-                // Lauto-encuadre inicial hacia la otra persona al abrir la pantalla
-                if (posicionPareja != null && !_primerEncuadreRealizado) {
-                  _primerEncuadreRealizado = true;
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _mapController.move(posicionPareja!, 13.0); // zoom mapa
-                  });
-                }
-              }
-
-              // mapa base y  pins
-              return FlutterMap(
-                mapController: _mapController,
-                options: const MapOptions(
-                  initialCenter: LatLng(40.416775, -3.703790), // Madrid por defecto si no hay datos 
-                  initialZoom: 12.0,
-                  // Bloquear que se peuda girar el mapa
-                  interactionOptions: InteractionOptions(
-                    flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                  ),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                    subdomains: const ['a', 'b', 'c', 'd'],
-                  ),
-                  MarkerLayer(markers: marcadoresEnDirecto), // Dibujar capa marcadores 
-                ],
-              );
-            },
+                  return MarkerLayer(markers: marcadoresEnDirecto); // Dibujar capa marcadores 
+                },
+              ),
+            ],
           ),
           
           // BOCADDILLITOS DE HISTORIAL Y AVISO DE DESCONEXIÓN

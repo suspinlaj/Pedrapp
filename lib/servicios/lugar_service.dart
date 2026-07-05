@@ -4,9 +4,14 @@ import 'package:uuid/uuid.dart';
 import 'package:pedrapp/modelos/lugar.dart';
 
 class LugarService {
+
+  static final FirebaseFirestore _db = FirebaseFirestore.instance;
+  static String? _cachedDeviceId;
   
   // Función interna para obtener el ID privado de este dispositivo
   static Future<String> getDeviceId() async {
+    if (_cachedDeviceId != null) return _cachedDeviceId!;
+
     final prefs = await SharedPreferences.getInstance();
     String? deviceId = prefs.getString('my_unique_device_id');
     
@@ -15,29 +20,32 @@ class LugarService {
       deviceId = const Uuid().v4();
       await prefs.setString('my_unique_device_id', deviceId);
     }
+    
+    _cachedDeviceId = deviceId; // Lo guardamos en caché para la próxima vez
     return deviceId;
   }
 
   static Future<void> setDeviceId(String newId) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString('my_unique_device_id', newId);
-}
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('my_unique_device_id', newId);
+    _cachedDeviceId = newId; 
+  }
 
   static Future<void> guardar(List<Lugar> lugares) async {
     final id = await getDeviceId(); // Obtenemos el ID privado
     final listaTransformada = lugares.map((l) => l.toJson()).toList();
 
     // Guardamos en la colección 'usuarios' pero en el documento de este ID
-    await FirebaseFirestore.instance
+    await _db
         .collection('usuarios')
-        .doc(id) // <--- Aquí está la clave: cada móvil tiene su propio documento
+        .doc(id) // cada móvil tiene su propio documento
         .set({'lugares_guardados': listaTransformada});
   }
 
   static Future<List<Lugar>> obtener() async {
     final id = await getDeviceId(); // Obtenemos el ID privado
 
-    final snapshot = await FirebaseFirestore.instance
+    final snapshot = await _db
         .collection('usuarios')
         .doc(id)
         .get();

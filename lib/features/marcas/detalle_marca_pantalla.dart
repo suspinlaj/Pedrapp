@@ -18,6 +18,8 @@ class DetalleMarcaPantalla extends StatefulWidget {
 }
 
 class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
+  // Instancia única del servicio para evitar recrearlo en bucles o acciones 
+  final MarcasService _marcasService = MarcasService();
 
   // --- DIÁLOGO DE OBJETIVO ---
   // para poder editar el objetivo de la categoria
@@ -30,7 +32,7 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
         onSave: (nuevoObjetivo) {
           // Actualiza la pantalla con el nuevo número y lo guarda en Firebase.
           setState(() => widget.categoria.objetivo = nuevoObjetivo);
-          MarcasService().guardarCategoria(widget.categoria);
+          _marcasService.guardarCategoria(widget.categoria); 
         },
       ),
     );
@@ -58,7 +60,7 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
             widget.categoria.historial.sort((a, b) => a.fecha.compareTo(b.fecha));
           });
           // Guarda los cambios en Firebase
-          MarcasService().guardarCategoria(widget.categoria);
+          _marcasService.guardarCategoria(widget.categoria); 
         },
       ),
     );
@@ -80,7 +82,7 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
         onConfirm: () {
           // Borra el ítem de la lista local, actualiza Firebase 
           setState(() => widget.categoria.historial.removeAt(indexReal));
-          MarcasService().guardarCategoria(widget.categoria);
+          _marcasService.guardarCategoria(widget.categoria); 
           Navigator.pop(context);
         },
       ),
@@ -98,9 +100,11 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
         finalMensaje: 'y todo su historial?\n\nPiensateló dos veces, que eres muy torpe eh.', 
         onConfirm: () async {
           // borrar de Firebase 
-          await MarcasService().borrarCategoria(widget.categoria.id);
-          Navigator.pop(context);
-          Navigator.pop(context);
+          await _marcasService.borrarCategoria(widget.categoria.id); 
+          if (mounted) {
+            Navigator.pop(context);
+            Navigator.pop(context);
+          }
         },
       ),
     );
@@ -127,7 +131,6 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
         shape: const Border(bottom: BorderSide(color: Colores.gris, width: 3)),
         // --- BOTÓN DE PAPELERA  ---
         actions: [
-          // Eliminamos la condición if para que siempre salga el botón
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.white),
             onPressed: _confirmarBorradoCategoria,
@@ -157,7 +160,7 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Mejor Marca", style: TextStyle(color: Colores.gris, fontSize: 14)),
+                            const Text("Mejor Marca", style: TextStyle(color: Colores.gris, fontSize: 14)), 
                             // Muestra el tiempo en verde si se logró el objetivo, si no, en negro.
                             Text(mejor == "--:--" ? "Aún sin datos" : mejor, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: estaLogrado ? Colors.green : Colors.black)),
                           ],
@@ -169,7 +172,7 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text("Objetivo ", style: TextStyle(color: Colores.gris, fontSize: 14)),
+                                const Text("Objetivo ", style: TextStyle(color: Colores.gris, fontSize: 14)), 
                                 GestureDetector(
                                   onTap: _mostrarDialogoEditarObjetivo,
                                   child: Icon(Icons.edit, color: widget.colorFondo, size: 16),
@@ -216,6 +219,8 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
                           
                           // extos a mostrar (tiempo y fecha).
                           final tiempo = CategoriaMarca.formatearTiempo(registro.segundosTotales);
+                          
+                          // Formateo de fecha 
                           final fechaStr = "${registro.fecha.day.toString().padLeft(2, '0')}/${registro.fecha.month.toString().padLeft(2, '0')}/${registro.fecha.year}";
 
                           // Diseño de cada fila de la lista

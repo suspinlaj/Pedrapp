@@ -15,7 +15,7 @@ class MarcasPantalla extends StatefulWidget {
 class _MarcasPantallaState extends State<MarcasPantalla> {
   final MarcasService _marcasServicio = MarcasService();
   
-  // Variable para  rueda de carga mientras se descargan los datos de Firebase
+  // rueda de carga mientras se descargan los datos de Firebase
   bool cargando = true;
 
   // Definir qué pruebas hay, sus iconos y objetivos por defecto.
@@ -64,7 +64,7 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
     }
 
     // --- ICONOS ROTATIVOS PARA CATEGORIAS NUEVAS ---
-    List<IconData> iconosGenericos = [
+    const List<IconData> iconosGenericos = [
       Icons.star, 
       Icons.favorite, 
       Icons.local_fire_department, 
@@ -73,9 +73,11 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
     ];
 
     // Extraemos de la nube SOLO las que sean nuevas
+    final Set<String> idsPlantilla = plantillaBase.map((p) => p.id).toSet();
     List<CategoriaMarca> categoriasPersonalizadas = [];
+    
     for (var nube in datosNube) {
-      if (!plantillaBase.any((plantilla) => plantilla.id == nube.id)) {
+      if (!idsPlantilla.contains(nube.id)) {
         categoriasPersonalizadas.add(nube);
       }
     }
@@ -193,7 +195,6 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
                 colores: paletaColores,
                 alVolver: _cargarDatosReales, 
               ),
-              // Ponemos el botón flotante SOLO en este Scaffold interno
               floatingActionButton: FloatingActionButton.extended(
                 onPressed: _mostrarDialogoNuevaCategoria,
                 backgroundColor: Colores.rojo,
@@ -224,7 +225,7 @@ class _ListaResumen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- Centrar y limitar ancho de la lista para que no quede deforme en tablets 
+    // Centrar y limitar ancho de la lista para que no quede deforme en tablets 
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600), 
