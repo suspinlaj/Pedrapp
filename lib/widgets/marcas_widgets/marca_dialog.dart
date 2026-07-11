@@ -45,6 +45,13 @@ class _DialogoMarcaState extends State<DialogoMarca> {
       secsController.text = segundos == segundos.truncateToDouble() ? segundos.toInt().toString() : segundos.toString();
     }
   }
+  
+  @override
+  void dispose() {
+    minsController.dispose();
+    secsController.dispose();
+    super.dispose();
+  }
 
   // DIALOG
   @override

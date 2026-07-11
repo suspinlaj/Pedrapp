@@ -9,6 +9,8 @@ import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/servicios/ubicacion_service.dart';
 import 'package:pedrapp/widgets/ubicacion/marcador_ubicacion.dart'; 
 import 'package:pedrapp/widgets/ubicacion/tarjeta_historial.dart';   
+import 'package:pedrapp/modelos/lugar.dart';
+import 'package:pedrapp/servicios/lugar_service.dart';
 
 class UbicacionCompartidaPantalla extends StatefulWidget {
   const UbicacionCompartidaPantalla({super.key});
@@ -30,11 +32,17 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
   // Evita que el mapa encuadre al otro todo el tiempo
   bool _primerEncuadreRealizado = false;
 
+  // guardar conexión en vivo para no abrir y cerrar  conexciones todo e rato
+  late final Stream<QuerySnapshot> _ubicacionesStream;
+
+  List<Marker> _marcadoresLugaresGris = []; // lugares guardados
 
   @override
   void initState() {
     super.initState();
     _cargarIdentidad(); // leer disco duro para saber quién es
+    _cargarLugaresInformativos(); //  Recuperar los lugares  para pintarlos en mapa
+    _ubicacionesStream = FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots();
   }
 
   @override
@@ -50,6 +58,56 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
     setState(() {
       miId = prefs.getString('quien_soy') ?? "Susana";
     });
+  }
+
+  //  Generar  pines lugares
+  Future<void> _cargarLugaresInformativos() async {
+    try {
+      final List<Lugar> lugares = await LugarService.obtener();
+      setState(() {
+        _marcadoresLugaresGris = lugares.map((l) => Marker(
+          point: LatLng(l.latitud, l.longitud),
+          width: 70, 
+          height: 55, 
+          alignment: Alignment.topCenter,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.bottomCenter,
+            children: [
+              // Etiqueta del lugar
+              Positioned(
+                bottom: 26,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colores.gris.withAlpha(150), width: 1.5),
+                  ),
+                  child: Text(
+                    l.nombre,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: Colores.gris,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              // Pin pequeño de ubicación en gris informativo (tamaño 28 frente al 45 original)
+              Icon(
+                Icons.location_on,
+                color: Colores.gris.withAlpha(150),
+                size: 28,
+              ),
+            ],
+          ),
+        )).toList();
+      });
+    } catch (e) {
+      debugPrint("Error cargando pines informativos: $e");
+    }
   }
 
   // diálogo  para cambiar usuario 
@@ -157,75 +215,78 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
       // --- CUERPO PRINCIPAL ---
       body: Stack(
         children: [
-          
-          // FONDO ->  escucha en tiempo real de FirebaseFirestore
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots(),
-            builder: (context, snapshot) {
+          FlutterMap(
+            mapController: _mapController,
+            options: const MapOptions(
+              initialCenter: LatLng(40.416775, -3.703790), // Madrid por defecto si no hay datos 
+              initialZoom: 12.0,
+              // Bloquear que se peuda girar el mapa
+              interactionOptions: InteractionOptions(
+                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              ),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                subdomains: const ['a', 'b', 'c', 'd'],
+              ),
+
+              // --- CAPA INFO GRIS ---
+              // Pintamos primero la lista fija de tus lugares en gris de fondo
+              MarkerLayer(markers: _marcadoresLugaresGris),
               
-              List<Marker> marcadoresEnDirecto = [];
-              LatLng? posicionPareja;
-
-              if (snapshot.hasData) {
-                // Bucle que lee las ubicaciones disponibles en la base de datos
-                for (var doc in snapshot.data!.docs) {
-                  var datos = doc.data() as Map<String, dynamic>;
-                  double? lat = datos['latitud'];
-                  double? lng = datos['longitud'];
+              // FONDO -> escucha en tiempo real de FirebaseFirestore
+              StreamBuilder<QuerySnapshot>(
+                stream: _ubicacionesStream, 
+                builder: (context, snapshot) {
                   
-                  if (lat != null && lng != null) {
-                    bool soyYo = doc.id == miId;
+                  List<Marker> marcadoresEnDirecto = [];
+                  LatLng? posicionPareja;
 
-                    if (!soyYo) {
-                      posicionPareja = LatLng(lat, lng); // Identifica las coordenadas del otro para el auto-zoom
+                  if (snapshot.hasData) {
+                    // Bucle que lee las ubicaciones disponibles en la base de datos
+                    for (var doc in snapshot.data!.docs) {
+                      var datos = doc.data() as Map<String, dynamic>;
+                      double? lat = datos['latitud'];
+                      double? lng = datos['longitud'];
+                      
+                      if (lat != null && lng != null) {
+                        bool soyYo = doc.id == miId;
+
+                        if (!soyYo) {
+                          posicionPareja = LatLng(lat, lng); // Identifica las coordenadas del otro para el auto-zoom
+                        }
+
+                        // Añade una chincheta a la lista del mapa
+                        marcadoresEnDirecto.add(
+                          Marker(
+                            point: LatLng(lat, lng),
+                            width: 100, 
+                            height: 80,  
+                            alignment: Alignment.topCenter, 
+                            child: MarcadorUbicacion(
+                              nombre: doc.id,
+                              soyYo: soyYo,
+                              colorTema: soyYo ? Colores.amarillo : Colores.rojo,
+                            ),
+                          )
+                        );
+                      }
                     }
 
-                    // Añade una chincheta a la lista del mapa
-                    marcadoresEnDirecto.add(
-                      Marker(
-                        point: LatLng(lat, lng),
-                        width: 100, 
-                        height: 80,  
-                        alignment: Alignment.topCenter, 
-                        child: MarcadorUbicacion(
-                          nombre: doc.id,
-                          soyYo: soyYo,
-                          colorTema: soyYo ? Colores.amarillo : Colores.rojo,
-                        ),
-                      )
-                    );
+                    // auto-encuadre inicial hacia la otra persona al abrir la pantalla
+                    if (posicionPareja != null && !_primerEncuadreRealizado) {
+                      _primerEncuadreRealizado = true;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _mapController.move(posicionPareja!, 13.0); // zoom mapa
+                      });
+                    }
                   }
-                }
 
-                // Lauto-encuadre inicial hacia la otra persona al abrir la pantalla
-                if (posicionPareja != null && !_primerEncuadreRealizado) {
-                  _primerEncuadreRealizado = true;
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _mapController.move(posicionPareja!, 13.0); // zoom mapa
-                  });
-                }
-              }
-
-              // mapa base y  pins
-              return FlutterMap(
-                mapController: _mapController,
-                options: const MapOptions(
-                  initialCenter: LatLng(40.416775, -3.703790), // Madrid por defecto si no hay datos 
-                  initialZoom: 12.0,
-                  // Bloquear que se peuda girar el mapa
-                  interactionOptions: InteractionOptions(
-                    flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                  ),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                    subdomains: const ['a', 'b', 'c', 'd'],
-                  ),
-                  MarkerLayer(markers: marcadoresEnDirecto), // Dibujar capa marcadores 
-                ],
-              );
-            },
+                  return MarkerLayer(markers: marcadoresEnDirecto); // Dibujar capa marcadores en vivo por encima de la gris
+                },
+              ),
+            ],
           ),
           
           // BOCADDILLITOS DE HISTORIAL Y AVISO DE DESCONEXIÓN

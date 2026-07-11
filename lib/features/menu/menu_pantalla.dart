@@ -9,8 +9,7 @@ class MenuPantalla extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-final isLandscape =
-    MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -71,8 +70,7 @@ final isLandscape =
                     const SizedBox(height: 50), 
 
                     // --- MAPA DE LUGARES ---
-                    _buildFlatButton(
-                      context,
+                    _BotonMenu(
                       titulo: 'MAPA DE LUGARES',
                       icono: Icons.map,
                       colorFondo: Colores.rojo,
@@ -86,8 +84,7 @@ final isLandscape =
                     const SizedBox(height: 25),
 
                     // --- POMODORO ---
-                    _buildFlatButton(
-                      context,
+                    _BotonMenu(
                       titulo: 'POMODORO',
                       icono: Icons.timer,
                       colorFondo: Colors.white, 
@@ -99,8 +96,7 @@ final isLandscape =
                     const SizedBox(height: 25),
 
                     // --- TUS MARCAS ---
-                    _buildFlatButton(
-                      context,
+                    _BotonMenu(
                       titulo: 'TUS MARCAS',
                       icono: Icons.fitness_center,
                       colorFondo: Colores.rojo,
@@ -114,8 +110,7 @@ final isLandscape =
                     const SizedBox(height: 25),
 
                     // --- UBICACIÓN ---
-                    _buildFlatButton(
-                      context,
+                    _BotonMenu(
                       titulo: 'UBICACIÓN',
                       icono: Icons.location_on,
                       colorFondo: Colors.white, 
@@ -135,15 +130,41 @@ final isLandscape =
     );
   }
 
-  // DISEÑO BOTÓN PERSONALIZADO REUTILIZABLE
-  Widget _buildFlatButton(
-    BuildContext context, {
-    required String titulo,      // El texto que mostrará
-    required IconData icono,     // El icono de la izquierda
-    required Color colorFondo,   // Color de la caja
-    required Color colorTexto,   // Color de las letras y el icono
-    required VoidCallback onTap, // La acción que hace al pulsarlo
-  }) {
+  // MENSAJE TEMPORAL (EN CONSTRUCCIÓN)
+  void _mostrarProximamente(BuildContext context, String nombre) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Si me tratas muy bien \nlo verás más pronto que tarde awa',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        backgroundColor: Colores.rojo,
+        behavior: SnackBarBehavior.floating, 
+      ),
+    );
+  }
+}
+
+// --- DISEÑO BOTÓN PERSONALIZADO REUTILIZABLE ---
+
+class _BotonMenu extends StatelessWidget {
+  final String titulo;
+  final IconData icono;
+  final Color colorFondo;
+  final Color colorTexto;
+  final VoidCallback onTap;
+
+  const _BotonMenu({
+    required this.titulo,
+    required this.icono,
+    required this.colorFondo,
+    required this.colorTexto,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -170,21 +191,6 @@ final isLandscape =
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // MENSAJE TEMPORAL (EN CONSTRUCCIÓN)
-  void _mostrarProximamente(BuildContext context, String nombre) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          'Si me tratas muy bien \nlo verás más pronto que tarde awa',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        backgroundColor: Colores.rojo,
-        behavior: SnackBarBehavior.floating, 
       ),
     );
   }

@@ -19,6 +19,7 @@ class MapaPantalla extends StatefulWidget {
 
 class _MapaPantallaState extends State<MapaPantalla> {
   List<Lugar> _misLugares = []; // Lista de lugares guardados
+  List<Marker> _marcadores = []; // caché de marcadores para ahorrar batería en movimiento 
   final MapController _mapController = MapController(); // Controlar el zoom y movimiento del mapa
   bool _mostrarLista = false; // Visibilidad del menú lateral
 
@@ -28,10 +29,57 @@ class _MapaPantallaState extends State<MapaPantalla> {
     _recargarLista(); // Carga los lugares al iniciar la pantalla
   }
 
+  // Precalcula los marcadores una sola vez cuando la lista muta 
+  void _generarMarcadoresEnCache() {
+    _marcadores = _misLugares.map((l) => Marker(
+      point: LatLng(l.latitud, l.longitud), 
+      width: 100, 
+      height: 80, 
+      alignment: Alignment.topCenter, 
+      child: GestureDetector(
+        // Al tocar el pin en el mapa, ir a waze
+        onTap: () => _abrirWaze(l.latitud, l.longitud),
+        behavior: HitTestBehavior.opaque,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter, // Alinea todo abajo
+          children: [
+            // --- ETIQUETA DE TEXTO LUGAR ---
+            Positioned(
+              bottom: 42, 
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.85), 
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colores.rojo, width: 2), 
+                ),
+                child: Text(
+                  l.nombre,
+                  style: const TextStyle(
+                    fontSize: 12, 
+                    fontWeight: FontWeight.w900, 
+                    color: Colors.black 
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            // --- ICONO CHINCHETA ---
+            const Icon(Icons.location_on, color: Colores.rojo, size: 45),
+          ],
+        ),
+      ),
+    )).toList();
+  }
+
   // Obtiene los lugares desde el servicio y actualiza la vista
   Future<void> _recargarLista() async {
     final lista = await LugarService.obtener();
-    setState(() => _misLugares = lista);
+    setState(() {
+      _misLugares = lista;
+      _generarMarcadoresEnCache(); //  Regenera la caché de diseño
+    });
 
     if (lista.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -72,9 +120,12 @@ class _MapaPantallaState extends State<MapaPantalla> {
     showDialog(
       context: context,
       builder: (context) => DialogLugarExacto(
-        punto: puntoClicado,
+        punto: puntoClicado, 
         onGuardar: (lugar) async {
-          setState(() => _misLugares.add(lugar));
+          setState(() {
+            _misLugares.add(lugar);
+            _generarMarcadoresEnCache(); // Actualiza la caché
+          });
           await LugarService.guardar(_misLugares);
           _recargarLista();
         },
@@ -89,7 +140,10 @@ class _MapaPantallaState extends State<MapaPantalla> {
       builder: (context) => DialogBuscarDireccion(
         centroMapa: _mapController.camera.center,
         onGuardar: (lugar) async {
-          setState(() => _misLugares.add(lugar));
+          setState(() {
+            _misLugares.add(lugar);
+            _generarMarcadoresEnCache(); // Actualiza la caché
+          });
           await LugarService.guardar(_misLugares);
           _recargarLista();
         },
@@ -106,7 +160,10 @@ class _MapaPantallaState extends State<MapaPantalla> {
         nombreItem: _misLugares[index].nombre, // nombre que va en negrita
         finalMensaje: 'de tu mapa?', // texto que va después del nombre
         onConfirm: () async {
-          setState(() => _misLugares.removeAt(index));
+          setState(() {
+            _misLugares.removeAt(index);
+            _generarMarcadoresEnCache(); // Actualiza la caché
+          });
           await LugarService.guardar(_misLugares);
           _recargarLista();
           Navigator.pop(context);
@@ -163,44 +220,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
                 urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
                 subdomains: const ['a', 'b', 'c', 'd'],
               ),
-              MarkerLayer(
-                markers: _misLugares.map((l) => Marker(
-                  point: LatLng(l.latitud, l.longitud), 
-                  // Reducimos la caja invisible del marcador para que no desplace el pin al quitar zoom
-                  width: 100, 
-                  height: 80, 
-                  alignment: Alignment.topCenter, 
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.bottomCenter, // Alinea todo abajo
-                    children: [
-                      // --- ETIQUETA DE TEXTO LUGAR ---
-                      Positioned(
-                        bottom: 42, // Se ajusta para flotar perfectamente sobre el icono de 45px
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.85), 
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colores.rojo, width: 2), 
-                          ),
-                          child: Text(
-                            l.nombre,
-                            style: const TextStyle(
-                              fontSize: 12, 
-                              fontWeight: FontWeight.w900, 
-                              color: Colors.black 
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                      // --- ICONO CHINCHETA ---
-                      const Icon(Icons.location_on, color: Colores.rojo, size: 45),
-                    ],
-                  ),
-                )).toList()
-              ),
+              MarkerLayer(markers: _marcadores),
             ],
           ),
 
@@ -210,7 +230,7 @@ class _MapaPantallaState extends State<MapaPantalla> {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque, 
                 onTap: () => setState(() => _mostrarLista = false),
-                child: Container(color: Colors.black54), // oscurece el mapa
+                child: Container(color: Colors.black54), 
               ),
             ),
           
@@ -223,9 +243,9 @@ class _MapaPantallaState extends State<MapaPantalla> {
             bottom: 0, 
             width: anchoBarra,
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
-                border: const Border(right: BorderSide(color: Colores.rojo, width: 3.0)), // Borde derecho ROJO 
+                border: Border(right: BorderSide(color: Colores.rojo, width: 3.0)), // Borde derecho ROJO 
               ),
               child: SafeArea(
                 child: ListaLugares(

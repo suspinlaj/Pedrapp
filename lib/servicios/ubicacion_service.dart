@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 class UbicacionService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   StreamSubscription<Position>? _rastreador;
+  DocumentReference? _miDocumentoCache;
 
   // Inicia el seguimiento del GPS
   Future<void> iniciarSeguimiento(String miIdUsuario) async {
@@ -31,6 +32,9 @@ class UbicacionService {
     if (permiso == LocationPermission.deniedForever) {
       return Future.error('Los permisos están denegados permanentemente. Ve a ajustes.');
     }
+
+    // --- GUARDAMOS LA RUTA EN CACHÉ AL EMPEZAR ---
+    _miDocumentoCache = _db.collection('ubicaciones_seguridad').doc(miIdUsuario);
 
     // Configuración para ahorrar batería y funcionar en segundo plano
     late LocationSettings configuracionUbicacion;
@@ -63,14 +67,16 @@ class UbicacionService {
     // Escuchar GPS y subirlo a Firebase automáticamente
     _rastreador = Geolocator.getPositionStream(locationSettings: configuracionUbicacion).listen(
       (Position posicion) {
-        _subirUbicacionAFirebase(miIdUsuario, posicion);
+        _subirUbicacionAFirebase(posicion); 
       }
     );
   }
 
   // Subir coordenadas a Firebase 
-  Future<void> _subirUbicacionAFirebase(String id, Position posicion) async {
-    await _db.collection('ubicaciones_seguridad').doc(id).set({
+  Future<void> _subirUbicacionAFirebase(Position posicion) async {
+    if (_miDocumentoCache == null) return; // Seguro por si falla algo
+
+    await _miDocumentoCache!.set({
       'latitud': posicion.latitude,
       'longitud': posicion.longitude,
       'ultima_actualizacion': FieldValue.serverTimestamp(),
@@ -84,7 +90,9 @@ class UbicacionService {
     _rastreador = null;
     
     // Avisar a Firebase de que el usuario ha apagado su transmisión
-    _db.collection('ubicaciones_seguridad').doc(miIdUsuario).update({
+    final docRef = _miDocumentoCache ?? _db.collection('ubicaciones_seguridad').doc(miIdUsuario);
+    
+    docRef.update({
       'activo': false,
     }).catchError((e) => debugPrint("Error al desactivar: $e"));
   }

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pedrapp/core/colores.dart';
 
-class TarjetaHistorial extends StatelessWidget {
+
+class TarjetaHistorial extends StatefulWidget {
   final String miId; // Para saber quiénes somos y buscar al "otro"
   final String Function(Timestamp?) calcularTiempoFn; // Función que formatea la hora traída desde la pantalla principal
 
@@ -13,11 +14,25 @@ class TarjetaHistorial extends StatelessWidget {
   });
 
   @override
+  State<TarjetaHistorial> createState() => _TarjetaHistorialState();
+}
+
+class _TarjetaHistorialState extends State<TarjetaHistorial> {
+  late final Stream<QuerySnapshot> _streamHistorial;
+
+  @override
+  void initState() {
+    super.initState();
+    // Abrimos el tubo de datos una sola vez al cargar la tarjeta
+    _streamHistorial = FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Escucha en tiempo real a Firebase. 
-    //Si el tiempo o el estado de la otra persona cambia,  la tarjeta se actualiza 
+    // Si el tiempo o el estado de la otra persona cambia, la tarjeta se actualiza 
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('ubicaciones_seguridad').snapshots(),
+      stream: _streamHistorial, // Usamos la variable cacheada
       builder: (context, snapshot) {
         
         // Valor por defecto mientras carga o si no hay datos en Firebase
@@ -30,7 +45,7 @@ class TarjetaHistorial extends StatelessWidget {
           
           // Recorrer  documentos buscando el que no sea el dle usuario actual
           for (var doc in snapshot.data!.docs) {
-            if (doc.id != miId) {
+            if (doc.id != widget.miId) {
               nombrePareja = doc.id;
               var datos = doc.data() as Map<String, dynamic>;
               Timestamp? ultimaAct = datos['ultima_actualizacion'] as Timestamp?;
@@ -39,7 +54,7 @@ class TarjetaHistorial extends StatelessWidget {
               parejaActiva = datos['activo'] ?? false;
               
               // Texto de historial conexion
-              textoConexionDinamico = "Señal de $nombrePareja: ${calcularTiempoFn(ultimaAct)}";
+              textoConexionDinamico = "Señal de $nombrePareja: ${widget.calcularTiempoFn(ultimaAct)}";
             }
           }
         }
@@ -74,7 +89,7 @@ class TarjetaHistorial extends StatelessWidget {
             ),
             
             // BOCADILLO SECUNDARIO (Aviso de GPS apagado)
-            // Solo se dibuja si  'activo' es falso.
+            // Solo se dibuja si 'activo' es falso.
             if (snapshot.hasData && !parejaActiva) ...[
               const SizedBox(height: 6), 
               Container(

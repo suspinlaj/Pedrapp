@@ -39,6 +39,13 @@ class _ObjetivoDialogState extends State<ObjetivoDialog> {
     secsController.text = segundos == segundos.truncateToDouble() ? segundos.toInt().toString() : segundos.toString();
   }
 
+  @override
+  void dispose() {
+    minsController.dispose();
+    secsController.dispose();
+    super.dispose();
+  }
+
   // dialog
   @override
   Widget build(BuildContext context) {

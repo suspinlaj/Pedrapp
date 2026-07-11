@@ -28,6 +28,14 @@ class _DialogBuscarDireccionState extends State<DialogBuscarDireccion> {
   String? error;                 // Muestra mensajes de error si faltan datos
   Timer? temporizador;           // Gestiona el "debounce" para no saturar la API al escribir
 
+  @override
+  void dispose() {
+    temporizador?.cancel();
+    nombreController.dispose();
+    direccionController.dispose();
+    super.dispose();
+  }
+
   // Valida y guarda el lugar manualmente usando las coordenadas del centro del mapa
   void _guardarLugar() {
     if (nombreController.text.isNotEmpty && direccionController.text.isNotEmpty) {
@@ -61,7 +69,7 @@ class _DialogBuscarDireccionState extends State<DialogBuscarDireccion> {
               decoration: const InputDecoration(hintText: "Nombre (Ej: Casa Mejor Novia)"),
               inputFormatters: [LengthLimitingTextInputFormatter(19)],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 10), 
             // --- ENTRY DIRECCIÓN --- 
             TextField(
               controller: direccionController,
@@ -100,7 +108,7 @@ class _DialogBuscarDireccionState extends State<DialogBuscarDireccion> {
                 padding: const EdgeInsets.only(top: 8), 
                 child: Text(
                   error!, 
-                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                  style: const TextStyle(color: Colors.red, fontSize: 12), 
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -116,7 +124,7 @@ class _DialogBuscarDireccionState extends State<DialogBuscarDireccion> {
                       dense: true, // Hace que cada resultado sea más compacto
                       contentPadding: EdgeInsets.zero,
                       title: Text(sugerencias[index]['display_name'], style: const TextStyle(fontSize: 12)),
-                      leading: const Icon(Icons.location_on, color: Colores.rojo),
+                      leading: const Icon(Icons.location_on, color: Colores.rojo), 
                       // Al seleccionar una sugerencia, guarda el lugar con las coordenadas encontradas
                       onTap: () {
                         if (nombreController.text.isEmpty) {

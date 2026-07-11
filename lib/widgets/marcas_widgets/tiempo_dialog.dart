@@ -7,6 +7,8 @@ class TiempoDialog extends StatelessWidget {
   final Color colorFondo; // El color de la categoría 
   final bool isDecimal; 
 
+  static final RegExp _regexDecimal = RegExp(r'^\d*\.?\d*');
+
   const TiempoDialog({
     super.key,
     required this.label, 
@@ -28,7 +30,7 @@ class TiempoDialog extends StatelessWidget {
         // Si es segundos permite decimal  Si es minutos, max 2 carac
         inputFormatters: isDecimal 
           ? [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')), // Permite números con un único punto decimal
+              FilteringTextInputFormatter.allow(_regexDecimal), 
               LengthLimitingTextInputFormatter(5), // Máximo 5 caracteres para dar espacio a los decimales
             ]
           : [

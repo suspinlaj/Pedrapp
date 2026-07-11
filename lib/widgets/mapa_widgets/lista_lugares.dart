@@ -68,101 +68,13 @@ class ListaLugares extends StatelessWidget {
                       itemBuilder: (context, index) {
                         final lugar = lugares[index];
 
-                        return InkWell(
-                          onTap: () => onLugarTap(
-                            lugar,
-                          ), // Clic en el elemento para centrar mapa
-
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // --- ICONO DE UBICACIÓN ---
-                                const Icon(
-                                  Icons.location_on,
-                                  color: Colores.rojo,
-                                  size: 24,
-                                ),
-
-                                const SizedBox(width: 5),
-
-                                // --- NOMBRE Y DIRECCIÓN DEL LUGAR ---
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          // NOMBRE LUGAR
-                                          Expanded(
-                                            child: Transform.translate(
-                                              offset: const Offset(0, -2), 
-                                              child: Text(
-                                                lugar.nombre,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: textSize,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-
-                                          // Botón de navegación (Waze)
-                                          InkWell(
-                                            onTap: () => onNavigateTap(
-                                              lugar.latitud,
-                                              lugar.longitud,
-                                            ),
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(4.0),
-                                              child: Icon(
-                                                Icons.navigation,
-                                                color: Colores.gris,
-                                                size: iconSize,
-                                              ),
-                                            ),
-                                          ),
-
-                                          // Botón de borrar lugar
-                                          InkWell(
-                                            onTap: () =>
-                                                onDeleteTap(index),
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(4.0),
-                                              child: Icon(
-                                                Icons.delete,
-                                                color: Colors.red,
-                                                size: iconSize,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                      // DIRECCION
-                                      Text(
-                                        lugar.direccion,
-                                        style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                          fontSize: textSize - 5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        return _FilaLugar(
+                          lugar: lugar,
+                          textSize: textSize,
+                          iconSize: iconSize,
+                          onTap: () => onLugarTap(lugar), // Clic en el elemento para centrar mapa
+                          onNavigateTap: () => onNavigateTap(lugar.latitud, lugar.longitud),
+                          onDeleteTap: () => onDeleteTap(index),
                         );
                       },
                     ),
@@ -170,6 +82,114 @@ class ListaLugares extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+//FILA DE LA LISTA
+class _FilaLugar extends StatelessWidget {
+  final Lugar lugar;
+  final double textSize;
+  final double iconSize;
+  final VoidCallback onTap;
+  final VoidCallback onNavigateTap;
+  final VoidCallback onDeleteTap;
+
+  const _FilaLugar({
+    required this.lugar,
+    required this.textSize,
+    required this.iconSize,
+    required this.onTap,
+    required this.onNavigateTap,
+    required this.onDeleteTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap, 
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 8,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- ICONO DE UBICACIÓN ---
+            const Icon(
+              Icons.location_on,
+              color: Colores.rojo,
+              size: 24,
+            ),
+
+            const SizedBox(width: 5),
+
+            // --- NOMBRE Y DIRECCIÓN DEL LUGAR ---
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      // NOMBRE LUGAR
+                      Expanded(
+                        child: Transform.translate(
+                          offset: const Offset(0, -2), 
+                          child: Text(
+                            lugar.nombre,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: textSize,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Botón de navegación (Waze)
+                      InkWell(
+                        onTap: onNavigateTap,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            Icons.navigation,
+                            color: Colores.gris,
+                            size: iconSize,
+                          ),
+                        ),
+                      ),
+
+                      // Botón de borrar lugar
+                      InkWell(
+                        onTap: onDeleteTap,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            Icons.delete,
+                            color: Colors.red,
+                            size: iconSize,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // DIRECCION
+                  Text(
+                    lugar.direccion,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: textSize - 5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
