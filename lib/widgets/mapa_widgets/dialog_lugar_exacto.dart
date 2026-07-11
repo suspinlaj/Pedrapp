@@ -20,6 +20,13 @@ class _DialogLugarExactoState extends State<DialogLugarExacto> {
   String? error; 
 
   @override
+  void dispose() {
+    nombreController.dispose();
+    direccionController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DialogGeneral(
       // --- TIUTLO ---
@@ -29,7 +36,7 @@ class _DialogLugarExactoState extends State<DialogLugarExacto> {
         if (nombreController.text.isNotEmpty) {
           widget.onGuardar(Lugar(
             nombre: nombreController.text, 
-            // --- CAMBIO: Coge lo que escriba en dirección. Si lo deja vacío, pone un texto por defecto ---
+            // Coge lo que escriba en dirección. Si lo deja vacío, pone un texto por defecto 
             direccion: direccionController.text.isNotEmpty ? direccionController.text : 'Punto en el mapa', 
             latitud: widget.punto.latitude, 
             longitud: widget.punto.longitude,

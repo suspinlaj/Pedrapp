@@ -14,7 +14,7 @@ class DialogRecuperarDatos extends StatefulWidget {
 class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
   final TextEditingController _restoreController = TextEditingController();
   String _miId = "Cargando...";
-  bool _isCopied = false; // <-- 1. Variable de estado para controlar el mensaje
+  bool _isCopied = false; //  Variable de estado para controlar el mensaje
 
   @override
   void initState() {
@@ -22,7 +22,13 @@ class _DialogRecuperarDatosState extends State<DialogRecuperarDatos> {
     _cargarId();
   }
 
-  // Obtenemos el ID público que definimos en LugarService
+  @override
+  void dispose() {
+    _restoreController.dispose();
+    super.dispose();
+  }
+
+  // Obtener el ID público que definimos en LugarService
   Future<void> _cargarId() async {
     final id = await LugarService.getDeviceId();
     setState(() => _miId = id);

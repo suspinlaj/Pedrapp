@@ -25,6 +25,14 @@ class _DialogoNuevaCategoriaState extends State<DialogoNuevaCategoria> {
   final secsController = TextEditingController();
 
   @override
+  void dispose() {
+    nombreController.dispose();
+    minsController.dispose();
+    secsController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DialogGeneral(
       title: "Nueva PrueBa",

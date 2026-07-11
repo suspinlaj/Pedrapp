@@ -48,23 +48,34 @@ class MarcasService {
 
       // Si la carpeta está vacía, devolvemos la plantilla inicial y la guardamos en Firebase para que el usuario tenga algo con lo que empezar.
       if (snapshot.docs.isEmpty) {
+        WriteBatch batch = _db.batch();
+        
         for (var cat in plantillaInicial) {
-          await guardarCategoria(cat);
+          var docRef = _db
+              .collection('usuarios')
+              .doc(idDispositivo)
+              .collection('marcas_oposicion')
+              .doc(cat.id);
+          batch.set(docRef, cat.toFirebase());
         }
+        await batch.commit(); // Sube el paquete entero de golpe
+        
         return plantillaInicial;
       }
 
       // EL USUARIO YA TIENE DATOS GUARDADOS
       List<CategoriaMarca> listaCargada = [];
+      
+      final Map<String, IconData> mapaIconos = {
+        for (var item in plantillaInicial) item.id: item.icono
+      };
+
       // Recorrer documento a documento lo que nos ha devuelto Firebase
       for (var doc in snapshot.docs) {
         var datos = doc.data(); // Extraer el diccionario (Map) con la info
         
-        // recuperar el icono
-        IconData iconoOriginal = plantillaInicial
-            .firstWhere((element) => element.id == datos['id'], 
-                      orElse: () => CategoriaMarca(id: 'err', nombre: '', icono: Icons.star, objetivo: 0.0))
-            .icono;
+        // recuperar el icono (ahora es una búsqueda instantánea)
+        IconData iconoOriginal = mapaIconos[datos['id']] ?? Icons.star;
 
         // Convertir texto de Firebase en un objeto de Flutter y lo añadir a la lista final
         listaCargada.add(CategoriaMarca.fromFirebase(datos, iconoOriginal));

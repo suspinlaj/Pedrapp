@@ -5,37 +5,17 @@ import 'package:pedrapp/core/frases.dart';
 import 'package:pedrapp/features/menu/menu_pantalla.dart';
 import 'package:pedrapp/widgets/dialog_recuperar_datos.dart'; 
 
-class PortadaPantalla extends StatefulWidget {
+class PortadaPantalla extends StatelessWidget {
   const PortadaPantalla({super.key});
 
   @override
-  State<PortadaPantalla> createState() => _PortadaPantallaState();
-}
-
-class _PortadaPantallaState extends State<PortadaPantalla> {
-  bool _mostrarPrimeraImagen = true;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(milliseconds: 600), (timer) {
-      setState(() {
-        _mostrarPrimeraImagen = !_mostrarPrimeraImagen;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final altoPantalla = MediaQuery.of(context).size.height;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    // evitar redibujos innecesarios
+    final altoPantalla = MediaQuery.sizeOf(context).height;
+    final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
+
+    // carcular la frase una sola vez al cargar la pantalla 
+    final fraseDelDia = Frases.obtenerFraseDelDia();
 
     return Scaffold(
       body: Container(
@@ -71,12 +51,7 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
                 const Spacer(flex: 1), 
 
                 // --- IMAGEN ANIMADA ---
-                Image.asset(
-                  _mostrarPrimeraImagen 
-                      ? 'assets/images/bombero1.png' 
-                      : 'assets/images/bombero2.png', 
-                  height: altoPantalla * 0.35, 
-                ),
+                _BomberoAnimado(altoPantalla: altoPantalla),
 
                 const Spacer(flex: 1), 
 
@@ -84,7 +59,7 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
                   padding: const EdgeInsets.symmetric(horizontal: 40.0), 
                   // --- FRASE DEL DÍA ---
                   child: Text(
-                    '"${Frases.obtenerFraseDelDia()}"',
+                    '"$fraseDelDia"',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 18,
@@ -144,6 +119,47 @@ class _PortadaPantallaState extends State<PortadaPantalla> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// GIF BOMBERO
+class _BomberoAnimado extends StatefulWidget {
+  final double altoPantalla;
+  
+  const _BomberoAnimado({required this.altoPantalla});
+
+  @override
+  State<_BomberoAnimado> createState() => _BomberoAnimadoState();
+}
+
+class _BomberoAnimadoState extends State<_BomberoAnimado> {
+  bool _mostrarPrimeraImagen = true;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(milliseconds: 600), (timer) {
+      setState(() {
+        _mostrarPrimeraImagen = !_mostrarPrimeraImagen;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      _mostrarPrimeraImagen 
+          ? 'assets/images/bombero1.png' 
+          : 'assets/images/bombero2.png', 
+      height: widget.altoPantalla * 0.35, 
     );
   }
 }
