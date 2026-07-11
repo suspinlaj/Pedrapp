@@ -36,34 +36,39 @@ class _MapaPantallaState extends State<MapaPantalla> {
       width: 100, 
       height: 80, 
       alignment: Alignment.topCenter, 
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.bottomCenter, // Alinea todo abajo
-        children: [
-          // --- ETIQUETA DE TEXTO LUGAR ---
-          Positioned(
-            bottom: 42, 
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.85), 
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colores.rojo, width: 2), 
-              ),
-              child: Text(
-                l.nombre,
-                style: const TextStyle(
-                  fontSize: 12, 
-                  fontWeight: FontWeight.w900, 
-                  color: Colors.black 
+      child: GestureDetector(
+        // Al tocar el pin en el mapa, ir a waze
+        onTap: () => _abrirWaze(l.latitud, l.longitud),
+        behavior: HitTestBehavior.opaque,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter, // Alinea todo abajo
+          children: [
+            // --- ETIQUETA DE TEXTO LUGAR ---
+            Positioned(
+              bottom: 42, 
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.85), 
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colores.rojo, width: 2), 
                 ),
-                textAlign: TextAlign.center,
+                child: Text(
+                  l.nombre,
+                  style: const TextStyle(
+                    fontSize: 12, 
+                    fontWeight: FontWeight.w900, 
+                    color: Colors.black 
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
-          ),
-          // --- ICONO CHINCHETA ---
-          const Icon(Icons.location_on, color: Colores.rojo, size: 45),
-        ],
+            // --- ICONO CHINCHETA ---
+            const Icon(Icons.location_on, color: Colores.rojo, size: 45),
+          ],
+        ),
       ),
     )).toList();
   }
