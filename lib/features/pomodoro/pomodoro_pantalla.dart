@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -138,8 +140,24 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
         android: androidSettings,
         iOS: iosSettings,
       );
+      
+      // Inicializa el motor de notificaciones
       await _notificationsPlugin.initialize(settings);
-    } catch (_) {}
+
+      // --- MAGIA AÑADIDA: Pedir permisos automáticamente al usuario ---
+      
+      // 1. Si el móvil es Android, pedimos permiso a la manera de Android (Obligatorio en Android 13+)
+      if (Platform.isAndroid) {
+        final androidPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+        
+        // Si por casualidad te sigue dando error de importación, asegúrate 
+        // de tener importado 'dart:io' arriba del todo.
+        await androidPlugin?.requestNotificationsPermission();
+      } 
+    } catch (e) {
+      debugPrint("Error inicializando notificaciones: $e");
+    }
   }
 
   void _startStopTimer() {
@@ -227,8 +245,8 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
   }
 
   Future<void> _showCompletionNotification() async {
-    final title = _isFocusMode ? '¡a estudiar vago!' : '¡tiempo de hablar \na la besto novia!';
-    final body = _isFocusMode ? 'Empieza tu descanso de $_breakMinutes min' : 'Empieza tu sesión de estudio de $_focusMinutes min';
+    final title = _isFocusMode ? '¡A estudiar vago!' : '¡Tiempo de hablar a la besto novia!';
+    final body = _isFocusMode ? 'Hora de dejar los juegos, de vuelta a estudiar jasjas' : 'Hora de tu amado descansito uwu';
 
     try {
       await _notificationsPlugin.show(
@@ -294,7 +312,7 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
           side: const BorderSide(color: Colores.rojo, width: 4),
         ),
         title: const Text(
-          'Historial de Estudio',
+          'HistoriaL de Estudio',
           style: TextStyle(color: Colores.rojo, fontFamily: 'Titulo', fontSize: 24),
           textAlign: TextAlign.center,
         ),
