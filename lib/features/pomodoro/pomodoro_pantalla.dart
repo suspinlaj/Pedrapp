@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:pedrapp/controller/pomodoro_controller.dart';
 import 'package:pedrapp/core/colores.dart';
-import 'package:pedrapp/widgets/pomodoro/reloj_flotante.dart';
 import 'package:pedrapp/widgets/pomodoro/selector_musica.dart';
 import 'package:video_player/video_player.dart';
 import 'package:pedrapp/widgets/pomodoro/selector_tiempo.dart';
 import 'package:pedrapp/widgets/pomodoro/dialog_historial.dart';
+
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 
 class PomodoroPantalla extends StatefulWidget {
   const PomodoroPantalla({super.key});
@@ -15,13 +16,41 @@ class PomodoroPantalla extends StatefulWidget {
 }
 
 class _PomodoroPantallaState extends State<PomodoroPantalla> {
-  // Obtenemos el Singleton (el controlador que no muere)
   final PomodoroController _controller = PomodoroController();
 
   @override
   void initState() {
     super.initState();
     _controller.inicializar(context);
+  }
+
+  Future<void> _iniciarPomodoroGlobal() async {
+    if (!_controller.isRunning) {
+      bool? isGranted = await FlutterOverlayWindow.isPermissionGranted();
+      
+      if (isGranted != true) {
+        await FlutterOverlayWindow.requestPermission();
+        return; 
+      }
+      
+      if (await FlutterOverlayWindow.isActive() == false) {
+        await FlutterOverlayWindow.showOverlay(
+          enableDrag: true,
+          // Dejamos los textos casi vacíos o minimalistas
+          overlayTitle: "Pedrapp", 
+          overlayContent: "⌛", 
+          flag: OverlayFlag.defaultFlag,
+          alignment: OverlayAlignment.center,
+          // MAGIA: Le pedimos a Android que la oculte lo máximo posible
+          visibility: NotificationVisibility.visibilitySecret, 
+          positionGravity: PositionGravity.auto,
+          width: 300, 
+          height: 300,
+        );
+      }
+    }
+
+    _controller.startStopTimer();
   }
 
   @override
@@ -209,12 +238,7 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
 
                             // --- BOTÓN INICIAR / PAUSAR ---
                             GestureDetector(
-                              onTap: () {
-                                _controller.startStopTimer();
-                                
-                                // Lanzamos el relojito independientemente de si es estudio o descanso
-                                RelojFlotante.mostrar(context, _controller);
-                              },
+                              onTap: _iniciarPomodoroGlobal,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                                 decoration: BoxDecoration(
@@ -235,8 +259,7 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                             // --- BOTÓN REINICIAR ---
                             GestureDetector(
                               onTap: () {
-                                _controller.resetTimer();
-                                RelojFlotante.ocultar(); // Escondemos el flotante si reinicia
+                                _controller.resetTimer(); 
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(12),

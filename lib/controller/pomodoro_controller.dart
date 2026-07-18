@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:isolate';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:pedrapp/modelos/cancion_pomodoro.dart';
 import 'package:video_player/video_player.dart';
@@ -6,23 +8,25 @@ import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// --- IMPORTS ---
+import 'package:flutter_overlay_window/flutter_overlay_window.dart'; 
 import 'package:pedrapp/data/canciones_data.dart';   
 import 'package:pedrapp/servicios/pomodoro_service.dart';
 import 'package:pedrapp/servicios/notificaciones_service.dart';
 
-class PomodoroController extends ChangeNotifier {
+class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   static const int _defaultFocusMinutes = 40;
   static const int _defaultBreakMinutes = 5;
 
-  // --- 1. MAGIA SINGLETON: Hace que el controlador sobreviva entre pantallas ---
   static final PomodoroController _instance = PomodoroController._internal();
   factory PomodoroController() => _instance;
 
   int _focusMinutes = _defaultFocusMinutes;
   int _breakMinutes = _defaultBreakMinutes;
   late int _secondsLeft;
+  
   Timer? _timer;
+  Timer? _latidoEnPausaTimer; // OPTIMIZACIÓN: Solo funciona cuando está pausado
+  
   bool _isRunning = false;
   bool _isFocusMode = true;
 
@@ -36,9 +40,9 @@ class PomodoroController extends ChangeNotifier {
   CancionPomodoro? _cancionSeleccionada;
   String? _rutaAudioCargada;
 
-  bool _isInitialized = false; // <-- Controla que no se inicialice 2 veces
+  bool _isInitialized = false; 
+  final ReceivePort _receivePort = ReceivePort();
 
-  // --- GETTERS ---
   int get focusMinutes => _focusMinutes;
   int get breakMinutes => _breakMinutes;
   int get secondsLeft => _secondsLeft;
@@ -48,14 +52,23 @@ class PomodoroController extends ChangeNotifier {
   bool get videoDescansoInicializado => descansoController?.value.isInitialized ?? false;
   CancionPomodoro? get cancionSeleccionada => _cancionSeleccionada;
 
-  // --- CONSTRUCTOR INTERNO ---
   PomodoroController._internal() {
     _secondsLeft = _defaultFocusMinutes * 60;
   }
 
-  // --- INICIALIZACIÓN ---
   void inicializar(BuildContext context) {
-    if (_isInitialized) return; // Si ya está corriendo en segundo plano, no lo reiniciamos.
+    if (_isInitialized) return; 
+
+    WidgetsBinding.instance.addObserver(this);
+
+    IsolateNameServer.removePortNameMapping('pomodoro_port');
+    IsolateNameServer.registerPortWithName(_receivePort.sendPort, 'pomodoro_port');
+    
+    _receivePort.listen((message) {
+      if (message == "TOGGLE") {
+        startStopTimer(); 
+      }
+    });
 
     NotificacionesService.inicializar();
     _initializeVideos();
@@ -67,9 +80,36 @@ class PomodoroController extends ChangeNotifier {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      _matarRelojFlotante();
+    }
+  }
+
+  @override
   void dispose() {
-    // Como es global (Singleton) y queremos que el ojito flotante y el reloj
-    // sigan funcionando por toda la app, dejamos el dispose vacío intencionadamente.
+    WidgetsBinding.instance.removeObserver(this);
+    _latidoEnPausaTimer?.cancel();
+    IsolateNameServer.removePortNameMapping('pomodoro_port');
+    _receivePort.close();
+    super.dispose();
+  }
+
+  // OPTIMIZACIÓN: Comunicación directa de memoria a memoria sin pasar por Android
+  void _sincronizarRelojFlotante() {
+    final SendPort? overlayPort = IsolateNameServer.lookupPortByName('overlay_pomodoro_port');
+    if (overlayPort != null) {
+      String paquete = "SYNC|${formatTime()}|$_isFocusMode|$_isRunning";
+      overlayPort.send(paquete);
+    }
+  }
+
+  void _matarRelojFlotante() {
+    final SendPort? overlayPort = IsolateNameServer.lookupPortByName('overlay_pomodoro_port');
+    if (overlayPort != null) {
+      overlayPort.send("KILL");
+    }
+    FlutterOverlayWindow.closeOverlay();
   }
 
   Future<void> _cargarAjustesMusica() async {
@@ -128,13 +168,9 @@ class PomodoroController extends ChangeNotifier {
 
   Future<void> seleccionarCancion(CancionPomodoro cancion) async {
     _cancionSeleccionada = cancion;
-    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('pomodoro_musica_id', cancion.id);
-
-    if (_isFocusMode && _isRunning) {
-      _gestionarMusicaDeFondo();
-    }
+    if (_isFocusMode && _isRunning) _gestionarMusicaDeFondo();
     notifyListeners();
   }
 
@@ -195,8 +231,11 @@ class PomodoroController extends ChangeNotifier {
 
   void _startTimer() {
     _isRunning = true;
+    _latidoEnPausaTimer?.cancel(); // Si arranca, paramos el latido de pausa
+    
     _actualizarEstadoVideos();
-    _gestionarMusicaDeFondo(); 
+    _gestionarMusicaDeFondo();
+    _sincronizarRelojFlotante(); 
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsLeft > 0) {
@@ -212,6 +251,9 @@ class PomodoroController extends ChangeNotifier {
         _gestionarMusicaDeFondo(); 
         _showCompletionNotification();
       }
+      
+      // OPTIMIZACIÓN: El propio avance del reloj actúa de latido de sincronización
+      _sincronizarRelojFlotante(); 
       notifyListeners();
     });
   }
@@ -222,12 +264,21 @@ class PomodoroController extends ChangeNotifier {
     _actualizarEstadoVideos();
     _gestionarMusicaDeFondo(); 
     NotificacionesService.cancelar();
+    _sincronizarRelojFlotante(); 
     notifyListeners();
+
+    // OPTIMIZACIÓN: Iniciamos el latido SOLO cuando está pausado para que la burbuja no muera
+    _latidoEnPausaTimer?.cancel();
+    _latidoEnPausaTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      _sincronizarRelojFlotante();
+    });
   }
 
   void resetTimer() {
     _stopTimer();
+    _latidoEnPausaTimer?.cancel();
     _secondsLeft = _isFocusMode ? _focusMinutes * 60 : _breakMinutes * 60;
+    _matarRelojFlotante();
     notifyListeners();
   }
 

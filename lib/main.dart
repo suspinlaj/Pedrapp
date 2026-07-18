@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:pedrapp/features/portada/portada_pantalla.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:pedrapp/widgets/pomodoro/reloj_flotante_sistema.dart';
 import 'firebase_options.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -42,4 +43,16 @@ class PedrApp extends StatelessWidget {
       home: const PortadaPantalla(),
     );
   }
+}
+
+// Reloj flotante del pomodoro
+@pragma("vm:entry-point")
+void overlayMain() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: RelojFlotanteSistema(), 
+    ),
+  );
 }
