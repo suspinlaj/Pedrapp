@@ -44,7 +44,12 @@ dependencies:
   cloud_firestore: ^6.6.0
   firebase_auth: ^6.5.3
   uuid: ^4.5.3
+  flutter_local_notifications: ^19.1.0
   geolocator: ^14.0.3
+  video_player: ^2.8.6
+  just_audio: ^0.9.36      
+  audio_session: ^0.1.19
+  flutter_overlay_window: ^0.5.0
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +82,13 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
   - assets/images/
+  - assets/audio/bread.mp3
+  - assets/audio/honey.mp3
+  - assets/audio/lluvia.mp3
+  - assets/audio/minecraft.mp3
+  - assets/audio/pajaritos.mp3
+  - assets/audio/pokemon.mp3
+  - assets/audio/rose.mp3
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

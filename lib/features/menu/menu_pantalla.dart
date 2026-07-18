@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/features/mapa/mapa_pantalla.dart';
 import 'package:pedrapp/features/marcas/marcas_pantalla.dart';
+import 'package:pedrapp/features/pomodoro/pomodoro_pantalla.dart';
 import 'package:pedrapp/features/ubicacion/ubicacion_compartida_pantalla.dart';
 
 class MenuPantalla extends StatelessWidget {
@@ -90,7 +91,10 @@ class MenuPantalla extends StatelessWidget {
                       colorFondo: Colors.white, 
                       colorTexto: Colores.gris,
                       // TODO: pantalla pomodoro
-                      onTap: () => _mostrarProximamente(context, 'Pomodoro'),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PomodoroPantalla()),
+                      ),
                     ),
 
                     const SizedBox(height: 25),
@@ -126,21 +130,6 @@ class MenuPantalla extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // MENSAJE TEMPORAL (EN CONSTRUCCIÓN)
-  void _mostrarProximamente(BuildContext context, String nombre) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Si me tratas muy bien \nlo verás más pronto que tarde awa',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        backgroundColor: Colores.rojo,
-        behavior: SnackBarBehavior.floating, 
       ),
     );
   }
