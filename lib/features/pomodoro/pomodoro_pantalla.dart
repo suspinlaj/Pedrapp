@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pedrapp/controller/pomodoro_controller.dart';
 import 'package:pedrapp/core/colores.dart';
+import 'package:pedrapp/widgets/pomodoro/reloj_flotante.dart';
 import 'package:pedrapp/widgets/pomodoro/selector_musica.dart';
 import 'package:video_player/video_player.dart';
 import 'package:pedrapp/widgets/pomodoro/selector_tiempo.dart';
@@ -14,36 +15,25 @@ class PomodoroPantalla extends StatefulWidget {
 }
 
 class _PomodoroPantallaState extends State<PomodoroPantalla> {
-  // Creamos la instancia del controlador
+  // Obtenemos el Singleton (el controlador que no muere)
   final PomodoroController _controller = PomodoroController();
 
   @override
   void initState() {
     super.initState();
-    // Le decimos al controlador que empiece a cargar todo
     _controller.inicializar(context);
   }
 
   @override
-  void dispose() {
-    // Importante limpiar el controlador
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // --- VARIABLES RESPONSIVE ---
     final size = MediaQuery.of(context).size;
-    final double videoSize = size.width > 400 ? 280.0 : size.width * 0.70;
+    final double videoSize = size.width > 400 ? 280.0 : size.width * 0.73;
     final double paddingVertical = size.height * 0.04;
 
-    // ListenableBuilder escucha al controlador y redibuja la UI automáticamente
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
         final colorTema = _controller.isFocusMode ? Colores.rojo : Colores.amarillo;
-        // Solo se muestra SI estamos en modo estudio Y el reloj está en marcha.
         final bool mostrarEstudio = _controller.isFocusMode && _controller.isRunning;
 
         return Scaffold(
@@ -92,15 +82,23 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                   height: videoSize,
                   child: mostrarEstudio
                       ? (_controller.videoEstudioInicializado
-                          ? AspectRatio(
-                              aspectRatio: _controller.estudioController!.value.aspectRatio,
-                              child: VideoPlayer(_controller.estudioController!),
+                          ? FittedBox(
+                              fit: BoxFit.cover,
+                              child: SizedBox(
+                                width: _controller.estudioController!.value.size.width,
+                                height: _controller.estudioController!.value.size.height,
+                                child: VideoPlayer(_controller.estudioController!),
+                              ),
                             )
                           : const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colores.rojo)))
                       : (_controller.videoDescansoInicializado
-                          ? AspectRatio(
-                              aspectRatio: _controller.descansoController!.value.aspectRatio,
-                              child: VideoPlayer(_controller.descansoController!),
+                          ? FittedBox(
+                              fit: BoxFit.cover,
+                              child: SizedBox(
+                                width: _controller.descansoController!.value.size.width,
+                                height: _controller.descansoController!.value.size.height,
+                                child: VideoPlayer(_controller.descansoController!),
+                              ),
                             )
                           : const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colores.amarillo))),
                 ),
@@ -115,7 +113,6 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        // --- TÍTULO DE ESTADO ---
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Text(
@@ -131,7 +128,6 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                         ),
                         SizedBox(height: paddingVertical),
 
-                        // --- RELOJ PRINCIPAL ---
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
                           decoration: BoxDecoration(
@@ -140,7 +136,7 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                             border: Border.all(color: colorTema, width: 4),
                           ),
                           child: Text(
-                            _controller.formatTime(), // <--- Llama al formateador del controlador
+                            _controller.formatTime(), 
                             style: TextStyle(
                               fontSize: size.width > 350 ? 80 : 65,
                               fontWeight: FontWeight.bold,
@@ -151,7 +147,6 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                         ),
                         SizedBox(height: paddingVertical),
 
-                        // --- SELECTORES DE TIEMPO ---
                         Wrap(
                           alignment: WrapAlignment.center,
                           spacing: 16,
@@ -173,22 +168,20 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                         ),
                         SizedBox(height: paddingVertical),
 
-                        // --- BOTONES DE CONTROL ---
                         Wrap(
                           alignment: WrapAlignment.center,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           spacing: 15,
                           runSpacing: 15,
                           children: [
-                            // --- BOTÓN MÚSICA (ACTUALIZADO) ---
+                            // --- BOTÓN MÚSICA ---
                             GestureDetector(
                               onTap: () {
-                                // --- NUEVO: Mostrar el BottomSheet deslizable стиль Pedrapp ---
                                 showModalBottomSheet(
                                   context: context,
-                                  backgroundColor: Colors.transparent, // Para que se vea el borde redondeado
+                                  backgroundColor: Colors.transparent, 
                                   builder: (context) => SelectorMusicaSheet(
-                                    controller: _controller, // Le pasamos el controlador
+                                    controller: _controller, 
                                   ),
                                 );
                               },
@@ -199,7 +192,6 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: Colores.gris, width: 3),
                                 ),
-                                // Resaltamos el icono en rojo si hay música seleccionada
                                 child: ListenableBuilder(
                                   listenable: _controller,
                                   builder: (context, _) {
@@ -217,7 +209,12 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
 
                             // --- BOTÓN INICIAR / PAUSAR ---
                             GestureDetector(
-                              onTap: _controller.startStopTimer, // <--- Llama a la función del controlador
+                              onTap: () {
+                                _controller.startStopTimer();
+                                
+                                // Lanzamos el relojito independientemente de si es estudio o descanso
+                                RelojFlotante.mostrar(context, _controller);
+                              },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                                 decoration: BoxDecoration(
@@ -237,7 +234,10 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
 
                             // --- BOTÓN REINICIAR ---
                             GestureDetector(
-                              onTap: _controller.resetTimer, // <--- Llama a la función del controlador
+                              onTap: () {
+                                _controller.resetTimer();
+                                RelojFlotante.ocultar(); // Escondemos el flotante si reinicia
+                              },
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(

@@ -1,4 +1,3 @@
-// lib/controllers/pomodoro_controller.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pedrapp/modelos/cancion_pomodoro.dart';
@@ -7,17 +6,18 @@ import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// --- NUEVOS IMPORTS ---
-import 'package:pedrapp/data/canciones_data.dart';   // Importa los datos
-
+// --- IMPORTS ---
+import 'package:pedrapp/data/canciones_data.dart';   
 import 'package:pedrapp/servicios/pomodoro_service.dart';
 import 'package:pedrapp/servicios/notificaciones_service.dart';
-
-// Ya no definimos CancionPomodoro aquí, viene del import.
 
 class PomodoroController extends ChangeNotifier {
   static const int _defaultFocusMinutes = 40;
   static const int _defaultBreakMinutes = 5;
+
+  // --- 1. MAGIA SINGLETON: Hace que el controlador sobreviva entre pantallas ---
+  static final PomodoroController _instance = PomodoroController._internal();
+  factory PomodoroController() => _instance;
 
   int _focusMinutes = _defaultFocusMinutes;
   int _breakMinutes = _defaultBreakMinutes;
@@ -36,8 +36,9 @@ class PomodoroController extends ChangeNotifier {
   CancionPomodoro? _cancionSeleccionada;
   String? _rutaAudioCargada;
 
-  // Ya no definimos la lista aquí.
+  bool _isInitialized = false; // <-- Controla que no se inicialice 2 veces
 
+  // --- GETTERS ---
   int get focusMinutes => _focusMinutes;
   int get breakMinutes => _breakMinutes;
   int get secondsLeft => _secondsLeft;
@@ -47,36 +48,36 @@ class PomodoroController extends ChangeNotifier {
   bool get videoDescansoInicializado => descansoController?.value.isInitialized ?? false;
   CancionPomodoro? get cancionSeleccionada => _cancionSeleccionada;
 
-  PomodoroController() {
+  // --- CONSTRUCTOR INTERNO ---
+  PomodoroController._internal() {
     _secondsLeft = _defaultFocusMinutes * 60;
   }
 
+  // --- INICIALIZACIÓN ---
   void inicializar(BuildContext context) {
+    if (_isInitialized) return; // Si ya está corriendo en segundo plano, no lo reiniciamos.
+
     NotificacionesService.inicializar();
     _initializeVideos();
     _cargarHistorial();
     _cargarAjustesMusica(); 
     _configureAudioSession(); 
+
+    _isInitialized = true;
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
-    estudioController?.dispose();
-    descansoController?.dispose();
-    _musicPlayer.dispose(); 
-    super.dispose();
+    // Como es global (Singleton) y queremos que el ojito flotante y el reloj
+    // sigan funcionando por toda la app, dejamos el dispose vacío intencionadamente.
   }
 
   Future<void> _cargarAjustesMusica() async {
     final prefs = await SharedPreferences.getInstance();
     final String cancionGuardadaId = prefs.getString('pomodoro_musica_id') ?? 'ninguno';
     
-    // Usamos CancionesData.listaDeCanciones para buscar
     _cancionSeleccionada = CancionesData.listaDeCanciones.firstWhere(
       (c) => c.id == cancionGuardadaId,
-      // Si por alguna razón no se encuentra la ID (ej. cambiamos el nombre en los datos),
-      // seleccionamos la primera por defecto.
       orElse: () => CancionesData.listaDeCanciones.first, 
     );
     notifyListeners();
@@ -96,7 +97,6 @@ class PomodoroController extends ChangeNotifier {
   }
 
   Future<void> _gestionarMusicaDeFondo() async {
-    // Verificamos contra la ID 'ninguno' que ahora está en CancionesData
     if (_cancionSeleccionada == null || 
         _cancionSeleccionada!.id == 'ninguno' || 
         !_isFocusMode || 
@@ -110,7 +110,6 @@ class PomodoroController extends ChangeNotifier {
     try {
       if (_rutaAudioCargada != _cancionSeleccionada!.assetPath) {
         await _musicPlayer.setAsset(_cancionSeleccionada!.assetPath);
-        // Esto garantiza el bucle
         await _musicPlayer.setLoopMode(LoopMode.one); 
         await _musicPlayer.setVolume(0.5); 
         _rutaAudioCargada = _cancionSeleccionada!.assetPath;
@@ -138,9 +137,6 @@ class PomodoroController extends ChangeNotifier {
     }
     notifyListeners();
   }
-
-  // ... El resto de métodos (_actualizarEstadoVideos, _cargarHistorial, etc.) 
-  // permanecen igual ...
 
   void _actualizarEstadoVideos() {
     final bool mostrarEstudio = _isFocusMode && _isRunning;
