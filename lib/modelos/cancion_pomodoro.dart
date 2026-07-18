@@ -1,4 +1,3 @@
-// lib/models/cancion_pomodoro.dart
 import 'package:flutter/material.dart';
 
 class CancionPomodoro {

@@ -133,21 +133,6 @@ class MenuPantalla extends StatelessWidget {
       ),
     );
   }
-
-  // MENSAJE TEMPORAL (EN CONSTRUCCIÓN)
-  void _mostrarProximamente(BuildContext context, String nombre) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Si me tratas muy bien \nlo verás más pronto que tarde awa',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        backgroundColor: Colores.rojo,
-        behavior: SnackBarBehavior.floating, 
-      ),
-    );
-  }
 }
 
 // --- DISEÑO BOTÓN PERSONALIZADO REUTILIZABLE ---

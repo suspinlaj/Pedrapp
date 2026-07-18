@@ -1,14 +1,10 @@
-// lib/widgets/pomodoro/selector_musica_sheet.dart
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart'; // Reproductor temporal de preview
+import 'package:just_audio/just_audio.dart'; 
 import 'package:pedrapp/controller/pomodoro_controller.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/cancion_pomodoro.dart';
+import 'package:pedrapp/data/canciones_data.dart';   
 
-// --- NUEVOS IMPORTS: Cruciales para acceder al modelo y a los datos ---
-import 'package:pedrapp/data/canciones_data.dart';   // import the data
-
-// Cambiamos a StatefulWidget para poder manejar el reproductor temporal de preview
 class SelectorMusicaSheet extends StatefulWidget {
   final PomodoroController controller;
 
@@ -22,29 +18,31 @@ class SelectorMusicaSheet extends StatefulWidget {
 }
 
 class _SelectorMusicaSheetState extends State<SelectorMusicaSheet> {
-  // Reproductor independiente solo para escuchar las pruebas
   final AudioPlayer _previewPlayer = AudioPlayer();
+  
+  // Almacenar identificador de la canción actualmente en prueba
   String? _idCancionSonandoPreview;
 
   @override
   void dispose() {
-    // Es crítico matar este reproductor al cerrar la pestaña para que se calle
+    // Destruir reproductor temporal al cerrar la pestaña
     _previewPlayer.dispose();
     super.dispose();
   }
 
-  // --- FUNCIÓN DE ESCUCHAR PRUEBA ---
+  // Alternar reproducción de prueba del archivo de audio
   Future<void> _togglePreview(CancionPomodoro cancion) async {
+    // Ignorar acción si la opción es "Ninguno"
     if (cancion.id == 'ninguno') return;
 
-    // Si pulsas la misma que ya está sonando, la pausas
+    // Pausar audio si la canción seleccionada ya está sonando
     if (_idCancionSonandoPreview == cancion.id) {
       await _previewPlayer.pause();
       setState(() {
         _idCancionSonandoPreview = null;
       });
     } 
-    // Si pulsas una nueva, la cargas y la reproduces
+    // Cargar y reproducir nueva canción seleccionada
     else {
       setState(() {
         _idCancionSonandoPreview = cancion.id;
@@ -69,7 +67,6 @@ class _SelectorMusicaSheetState extends State<SelectorMusicaSheet> {
       listenable: widget.controller,
       builder: (context, _) {
         return Container(
-          // Limitamos el alto a máximo el 65% de la pantalla para evitar Overflow
           height: MediaQuery.of(context).size.height * 0.65,
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -84,7 +81,6 @@ class _SelectorMusicaSheetState extends State<SelectorMusicaSheet> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Barra de arrastre visual arriba
               Container(
                 width: 40,
                 height: 5,
@@ -94,6 +90,8 @@ class _SelectorMusicaSheetState extends State<SelectorMusicaSheet> {
                 ),
               ),
               const SizedBox(height: 20),
+              
+              // TITULO
               const Text(
                 'Musica de Fondo',
                 style: TextStyle(
@@ -104,29 +102,33 @@ class _SelectorMusicaSheetState extends State<SelectorMusicaSheet> {
               ),
               const SizedBox(height: 20),
               
-              // --- EL LISTVIEW MÁGICO PARA EVITAR EL OVERFLOW ---
+              // lista desplazable de opciones 
               Expanded(
                 child: ListView.builder(
-                  // --- CORRECCIÓN: Leemos directamente de la clase CancionesData ---
+                  // Contar total de canciones disponibles en la base de datos
                   itemCount: CancionesData.listaDeCanciones.length,
                   itemBuilder: (context, index) {
-                    // --- CORRECCIÓN: Leemos directamente de la clase CancionesData ---
+                    // Obtener datos de la canción en la posición actual
                     final cancion = CancionesData.listaDeCanciones[index];
                     
-                    // Comprobamos cuál es la oficial y cuál está sonando de prueba
+                    // Verificar si la canción es la configurada 
                     final bool esSeleccionadaOficial = widget.controller.cancionSeleccionada?.id == cancion.id ||
                         (widget.controller.cancionSeleccionada == null && cancion.id == 'ninguno');
+                    
+                    // Verificar si la canción se está reproduciendo en previsualización
                     final bool esPreviewActual = _idCancionSonandoPreview == cancion.id;
 
                     return GestureDetector(
                       onTap: () {
-                        // Al pulsar toda la caja, se SELECCIONA oficialmente y se guarda en la nube
+                        // Establecer canción como oficial en el controlador
                         widget.controller.seleccionarCancion(cancion);
-                        Navigator.pop(context); // Cierra y mata el reproductor preview
+                        
+                        Navigator.pop(context); 
                       },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                        // COLORES
                         decoration: BoxDecoration(
                           color: esSeleccionadaOficial ? Colores.amarillo.withOpacity(0.1) : Colors.white,
                           border: Border.all(
@@ -137,10 +139,11 @@ class _SelectorMusicaSheetState extends State<SelectorMusicaSheet> {
                         ),
                         child: Row(
                           children: [
+                            // ICONOS
                             Icon(cancion.icono, color: esSeleccionadaOficial ? Colores.rojo : Colores.rojo, size: 28),
                             const SizedBox(width: 15),
                             
-                            // Título de la canción
+                            // TITULO
                             Expanded(
                               child: Text(
                                 cancion.nombre,
@@ -152,7 +155,7 @@ class _SelectorMusicaSheetState extends State<SelectorMusicaSheet> {
                               ),
                             ),
 
-                            // --- BOTÓN DE PLAY PARA ESCUCHARLA ANTES ---
+                            // ICONO DE PLAY/PAUSE PARA PREVISUALIZACIÓN
                             if (cancion.id != 'ninguno')
                               IconButton(
                                 icon: Icon(
@@ -163,14 +166,13 @@ class _SelectorMusicaSheetState extends State<SelectorMusicaSheet> {
                                 onPressed: () => _togglePreview(cancion),
                               ),
 
-                            // Icono verde/rojo de confirmación de seleccionada
+                            // ICONO DE SELECCIÓN
                             if (esSeleccionadaOficial)
                               const Padding(
                                 padding: EdgeInsets.only(left: 8.0),
                                 child: Icon(Icons.check_circle, color: Colores.rojo, size: 28),
                               ),
                               
-                            // Espaciado falso para alinear cuando la de 'ninguno' no tiene botón de Play
                             if (!esSeleccionadaOficial && cancion.id == 'ninguno')
                               const SizedBox(width: 48),
                           ],

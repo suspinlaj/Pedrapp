@@ -1,7 +1,7 @@
-// lib/data/canciones_data.dart
 import 'package:flutter/material.dart';
 import 'package:pedrapp/modelos/cancion_pomodoro.dart';
 
+// LISTA CANCIONES DISPONIBLES
 class CancionesData {
   static const List<CancionPomodoro> listaDeCanciones = [
     CancionPomodoro(
