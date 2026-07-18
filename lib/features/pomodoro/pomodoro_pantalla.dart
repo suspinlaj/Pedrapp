@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+
+// --- NUEVO: Imports para detectar si estamos en Web o Android ---
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
+
 import 'package:pedrapp/controller/pomodoro_controller.dart';
 import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/widgets/pomodoro/selector_musica.dart';
@@ -24,7 +29,20 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
     _controller.inicializar(context);
   }
 
+  // --- MAGIA: Comprobador universal ---
+  bool get _soportaBurbujaFlotante {
+    if (kIsWeb) return false; 
+    return Platform.isAndroid; 
+  }
+
   Future<void> _iniciarPomodoroGlobal() async {
+    // Si estamos en la Web, en iOS o en Escritorio, simplemente iniciamos el reloj y NO intentamos abrir la burbuja
+    if (!_soportaBurbujaFlotante) {
+      _controller.startStopTimer();
+      return; 
+    }
+
+    // SI ESTAMOS EN ANDROID (Móvil o Tablet):
     if (!_controller.isRunning) {
       bool? isGranted = await FlutterOverlayWindow.isPermissionGranted();
       
@@ -36,12 +54,10 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
       if (await FlutterOverlayWindow.isActive() == false) {
         await FlutterOverlayWindow.showOverlay(
           enableDrag: true,
-          // Dejamos los textos casi vacíos o minimalistas
           overlayTitle: "Pedrapp", 
           overlayContent: "⌛", 
           flag: OverlayFlag.defaultFlag,
           alignment: OverlayAlignment.center,
-          // MAGIA: Le pedimos a Android que la oculte lo máximo posible
           visibility: NotificationVisibility.visibilitySecret, 
           positionGravity: PositionGravity.auto,
           width: 300, 
@@ -203,7 +219,6 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                           spacing: 15,
                           runSpacing: 15,
                           children: [
-                            // --- BOTÓN MÚSICA ---
                             GestureDetector(
                               onTap: () {
                                 showModalBottomSheet(
@@ -236,7 +251,6 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                               ),
                             ),
 
-                            // --- BOTÓN INICIAR / PAUSAR ---
                             GestureDetector(
                               onTap: _iniciarPomodoroGlobal,
                               child: Container(
@@ -256,7 +270,6 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                               ),
                             ),
 
-                            // --- BOTÓN REINICIAR ---
                             GestureDetector(
                               onTap: () {
                                 _controller.resetTimer(); 

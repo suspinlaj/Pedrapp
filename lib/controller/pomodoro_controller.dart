@@ -2,6 +2,11 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+
+// --- NUEVO: Imports para detectar si estamos en Web o Android ---
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
+
 import 'package:pedrapp/modelos/cancion_pomodoro.dart';
 import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
@@ -25,7 +30,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   late int _secondsLeft;
   
   Timer? _timer;
-  Timer? _latidoEnPausaTimer; // OPTIMIZACIÓN: Solo funciona cuando está pausado
+  Timer? _latidoEnPausaTimer;
   
   bool _isRunning = false;
   bool _isFocusMode = true;
@@ -42,6 +47,12 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
 
   bool _isInitialized = false; 
   final ReceivePort _receivePort = ReceivePort();
+
+  // --- MAGIA: Comprobador universal para evitar crasheos en Web/PC/iOS ---
+  bool get _soportaBurbujaFlotante {
+    if (kIsWeb) return false; // Si es web, devolvemos false al instante
+    return Platform.isAndroid; // Si no es web, comprobamos si es Android
+  }
 
   int get focusMinutes => _focusMinutes;
   int get breakMinutes => _breakMinutes;
@@ -61,14 +72,23 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
 
     WidgetsBinding.instance.addObserver(this);
 
-    IsolateNameServer.removePortNameMapping('pomodoro_port');
-    IsolateNameServer.registerPortWithName(_receivePort.sendPort, 'pomodoro_port');
-    
-    _receivePort.listen((message) {
-      if (message == "TOGGLE") {
-        startStopTimer(); 
-      }
-    });
+    // SOLO abrimos los puertos de memoria si estamos en Android
+    if (_soportaBurbujaFlotante) {
+      IsolateNameServer.removePortNameMapping('pomodoro_port');
+      IsolateNameServer.registerPortWithName(_receivePort.sendPort, 'pomodoro_port');
+      
+      _receivePort.listen((message) {
+        if (message == "TOGGLE") {
+          startStopTimer(); 
+        }
+      });
+
+      FlutterOverlayWindow.overlayListener.listen((event) {
+        if (event == "TOGGLE") {
+          startStopTimer(); 
+        }
+      });
+    }
 
     NotificacionesService.inicializar();
     _initializeVideos();
@@ -90,13 +110,18 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _latidoEnPausaTimer?.cancel();
-    IsolateNameServer.removePortNameMapping('pomodoro_port');
-    _receivePort.close();
+    
+    // Solo cerramos puertos si estamos en Android
+    if (_soportaBurbujaFlotante) {
+      IsolateNameServer.removePortNameMapping('pomodoro_port');
+      _receivePort.close();
+    }
     super.dispose();
   }
 
-  // OPTIMIZACIÓN: Comunicación directa de memoria a memoria sin pasar por Android
-  void _sincronizarRelojFlotante() {
+  void _sincronizarRelojFlotante() async {
+    if (!_soportaBurbujaFlotante) return; // Cortafuegos para Web/PC
+
     final SendPort? overlayPort = IsolateNameServer.lookupPortByName('overlay_pomodoro_port');
     if (overlayPort != null) {
       String paquete = "SYNC|${formatTime()}|$_isFocusMode|$_isRunning";
@@ -105,6 +130,8 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _matarRelojFlotante() {
+    if (!_soportaBurbujaFlotante) return; // Cortafuegos para Web/PC
+
     final SendPort? overlayPort = IsolateNameServer.lookupPortByName('overlay_pomodoro_port');
     if (overlayPort != null) {
       overlayPort.send("KILL");
@@ -231,7 +258,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
 
   void _startTimer() {
     _isRunning = true;
-    _latidoEnPausaTimer?.cancel(); // Si arranca, paramos el latido de pausa
+    _latidoEnPausaTimer?.cancel(); 
     
     _actualizarEstadoVideos();
     _gestionarMusicaDeFondo();
@@ -252,7 +279,6 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
         _showCompletionNotification();
       }
       
-      // OPTIMIZACIÓN: El propio avance del reloj actúa de latido de sincronización
       _sincronizarRelojFlotante(); 
       notifyListeners();
     });
@@ -267,11 +293,12 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     _sincronizarRelojFlotante(); 
     notifyListeners();
 
-    // OPTIMIZACIÓN: Iniciamos el latido SOLO cuando está pausado para que la burbuja no muera
-    _latidoEnPausaTimer?.cancel();
-    _latidoEnPausaTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      _sincronizarRelojFlotante();
-    });
+    if (_soportaBurbujaFlotante) {
+      _latidoEnPausaTimer?.cancel();
+      _latidoEnPausaTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+        _sincronizarRelojFlotante();
+      });
+    }
   }
 
   void resetTimer() {
