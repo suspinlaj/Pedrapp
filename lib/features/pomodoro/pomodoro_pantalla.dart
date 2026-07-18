@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pedrapp/controller/pomodoro_controller.dart';
 import 'package:pedrapp/core/colores.dart';
+import 'package:pedrapp/widgets/pomodoro/selector_musica.dart';
 import 'package:video_player/video_player.dart';
 import 'package:pedrapp/widgets/pomodoro/selector_tiempo.dart';
 import 'package:pedrapp/widgets/pomodoro/dialog_historial.dart';
@@ -179,14 +180,15 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                           spacing: 15,
                           runSpacing: 15,
                           children: [
-                            // --- BOTÓN MÚSICA ---
+                            // --- BOTÓN MÚSICA (ACTUALIZADO) ---
                             GestureDetector(
                               onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Próximamente...', textAlign: TextAlign.center),
-                                    backgroundColor: Colores.rojo,
-                                    duration: Duration(seconds: 2),
+                                // --- NUEVO: Mostrar el BottomSheet deslizable стиль Pedrapp ---
+                                showModalBottomSheet(
+                                  context: context,
+                                  backgroundColor: Colors.transparent, // Para que se vea el borde redondeado
+                                  builder: (context) => SelectorMusicaSheet(
+                                    controller: _controller, // Le pasamos el controlador
                                   ),
                                 );
                               },
@@ -197,7 +199,19 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: Colores.gris, width: 3),
                                 ),
-                                child: const Icon(Icons.music_note, color: Colores.gris, size: 30),
+                                // Resaltamos el icono en rojo si hay música seleccionada
+                                child: ListenableBuilder(
+                                  listenable: _controller,
+                                  builder: (context, _) {
+                                    final hayMusica = _controller.cancionSeleccionada != null && 
+                                                      _controller.cancionSeleccionada!.id != 'ninguno';
+                                    return Icon(
+                                      hayMusica ? Icons.headset_mic : Icons.music_note, 
+                                      color: hayMusica ? Colores.rojo : Colores.gris, 
+                                      size: 30
+                                    );
+                                  }
+                                ),
                               ),
                             ),
 

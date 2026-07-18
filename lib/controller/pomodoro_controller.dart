@@ -1,14 +1,24 @@
+// lib/controllers/pomodoro_controller.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:pedrapp/modelos/cancion_pomodoro.dart';
 import 'package:video_player/video_player.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:audio_session/audio_session.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// --- NUEVOS IMPORTS ---
+import 'package:pedrapp/data/canciones_data.dart';   // Importa los datos
+
 import 'package:pedrapp/servicios/pomodoro_service.dart';
 import 'package:pedrapp/servicios/notificaciones_service.dart';
+
+// Ya no definimos CancionPomodoro aquí, viene del import.
 
 class PomodoroController extends ChangeNotifier {
   static const int _defaultFocusMinutes = 40;
   static const int _defaultBreakMinutes = 5;
 
-  // --- ESTADO DE LA APP (Privado) ---
   int _focusMinutes = _defaultFocusMinutes;
   int _breakMinutes = _defaultBreakMinutes;
   late int _secondsLeft;
@@ -16,15 +26,18 @@ class PomodoroController extends ChangeNotifier {
   bool _isRunning = false;
   bool _isFocusMode = true;
 
-  // --- VARIABLES DEL HISTORIAL ---
   int minutosHoy = 0;
   int minutosTotales = 0;
 
-  // --- CONTROLADORES DE VÍDEO ---
   VideoPlayerController? estudioController;
   VideoPlayerController? descansoController;
+  
+  final AudioPlayer _musicPlayer = AudioPlayer(); 
+  CancionPomodoro? _cancionSeleccionada;
+  String? _rutaAudioCargada;
 
-  // --- GETTERS (Para leer el estado desde la UI) ---
+  // Ya no definimos la lista aquí.
+
   int get focusMinutes => _focusMinutes;
   int get breakMinutes => _breakMinutes;
   int get secondsLeft => _secondsLeft;
@@ -32,16 +45,18 @@ class PomodoroController extends ChangeNotifier {
   bool get isFocusMode => _isFocusMode;
   bool get videoEstudioInicializado => estudioController?.value.isInitialized ?? false;
   bool get videoDescansoInicializado => descansoController?.value.isInitialized ?? false;
+  CancionPomodoro? get cancionSeleccionada => _cancionSeleccionada;
 
   PomodoroController() {
     _secondsLeft = _defaultFocusMinutes * 60;
   }
 
-  // --- INICIALIZACIÓN ---
   void inicializar(BuildContext context) {
     NotificacionesService.inicializar();
     _initializeVideos();
     _cargarHistorial();
+    _cargarAjustesMusica(); 
+    _configureAudioSession(); 
   }
 
   @override
@@ -49,10 +64,83 @@ class PomodoroController extends ChangeNotifier {
     _timer?.cancel();
     estudioController?.dispose();
     descansoController?.dispose();
+    _musicPlayer.dispose(); 
     super.dispose();
   }
 
-  // --- LÓGICA PRIVADA ---
+  Future<void> _cargarAjustesMusica() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String cancionGuardadaId = prefs.getString('pomodoro_musica_id') ?? 'ninguno';
+    
+    // Usamos CancionesData.listaDeCanciones para buscar
+    _cancionSeleccionada = CancionesData.listaDeCanciones.firstWhere(
+      (c) => c.id == cancionGuardadaId,
+      // Si por alguna razón no se encuentra la ID (ej. cambiamos el nombre en los datos),
+      // seleccionamos la primera por defecto.
+      orElse: () => CancionesData.listaDeCanciones.first, 
+    );
+    notifyListeners();
+  }
+
+  Future<void> _configureAudioSession() async {
+    final session = await AudioSession.instance;
+    await session.configure(const AudioSessionConfiguration.music());
+
+    session.interruptionEventStream.listen((event) {
+      if (event.begin) {
+        if (_musicPlayer.playing) {
+          _musicPlayer.pause();
+        }
+      }
+    });
+  }
+
+  Future<void> _gestionarMusicaDeFondo() async {
+    // Verificamos contra la ID 'ninguno' que ahora está en CancionesData
+    if (_cancionSeleccionada == null || 
+        _cancionSeleccionada!.id == 'ninguno' || 
+        !_isFocusMode || 
+        !_isRunning) {
+      if (_musicPlayer.playing) {
+        await _musicPlayer.stop();
+      }
+      return;
+    }
+
+    try {
+      if (_rutaAudioCargada != _cancionSeleccionada!.assetPath) {
+        await _musicPlayer.setAsset(_cancionSeleccionada!.assetPath);
+        // Esto garantiza el bucle
+        await _musicPlayer.setLoopMode(LoopMode.one); 
+        await _musicPlayer.setVolume(0.5); 
+        _rutaAudioCargada = _cancionSeleccionada!.assetPath;
+      }
+      
+      if (!_musicPlayer.playing) {
+        final session = await AudioSession.instance;
+        if (await session.setActive(true)) {
+          _musicPlayer.play();
+        }
+      }
+    } catch (e) {
+      debugPrint("Error reproduciendo música: $e");
+    }
+  }
+
+  Future<void> seleccionarCancion(CancionPomodoro cancion) async {
+    _cancionSeleccionada = cancion;
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('pomodoro_musica_id', cancion.id);
+
+    if (_isFocusMode && _isRunning) {
+      _gestionarMusicaDeFondo();
+    }
+    notifyListeners();
+  }
+
+  // ... El resto de métodos (_actualizarEstadoVideos, _cargarHistorial, etc.) 
+  // permanecen igual ...
 
   void _actualizarEstadoVideos() {
     final bool mostrarEstudio = _isFocusMode && _isRunning;
@@ -63,14 +151,14 @@ class PomodoroController extends ChangeNotifier {
       estudioController?.pause();
       descansoController?.play();
     }
-    notifyListeners(); // Avisar a la UI de que cambian los vídeos
+    notifyListeners();
   }
 
   Future<void> _cargarHistorial() async {
     final datos = await PomodoroService.cargarHistorial();
     minutosTotales = datos['total'] ?? 0;
     minutosHoy = datos['hoy'] ?? 0;
-    notifyListeners(); // Avisar a la UI
+    notifyListeners();
   }
 
   Future<void> _sumarTiempoAlHistorial(int minutos) async {
@@ -100,8 +188,6 @@ class PomodoroController extends ChangeNotifier {
       });
   }
 
-  // --- FUNCIONES PÚBLICAS (Invocadas por la UI) ---
-
   void startStopTimer() {
     if (_isRunning) {
       _stopTimer();
@@ -114,6 +200,7 @@ class PomodoroController extends ChangeNotifier {
   void _startTimer() {
     _isRunning = true;
     _actualizarEstadoVideos();
+    _gestionarMusicaDeFondo(); 
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsLeft > 0) {
@@ -126,9 +213,10 @@ class PomodoroController extends ChangeNotifier {
         _secondsLeft = _isFocusMode ? _focusMinutes * 60 : _breakMinutes * 60;
         _isRunning = false;
         _actualizarEstadoVideos();
+        _gestionarMusicaDeFondo(); 
         _showCompletionNotification();
       }
-      notifyListeners(); // Importante: actualiza el reloj en la UI cada segundo
+      notifyListeners();
     });
   }
 
@@ -136,6 +224,7 @@ class PomodoroController extends ChangeNotifier {
     _timer?.cancel();
     _isRunning = false;
     _actualizarEstadoVideos();
+    _gestionarMusicaDeFondo(); 
     NotificacionesService.cancelar();
     notifyListeners();
   }
