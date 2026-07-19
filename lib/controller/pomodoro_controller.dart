@@ -2,34 +2,29 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
-// Importar librerías para detectar plataforma web o móvil
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
-
 import 'package:pedrapp/modelos/cancion_pomodoro.dart';
 import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:flutter_overlay_window/flutter_overlay_window.dart'; 
 import 'package:pedrapp/data/canciones_data.dart';   
 import 'package:pedrapp/servicios/pomodoro_service.dart';
 import 'package:pedrapp/servicios/notificaciones_service.dart';
 
-// Definir clase principal para controlar la lógica del pomodoro
 class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   
-  // Establecer tiempos por defecto al abrir la app
+  // tiempos por defecto al abrir la app
   static const int _defaultFocusMinutes = 40;
   static const int _defaultBreakMinutes = 5;
 
-  // Aplicar patrón Singleton para mantener un único controlador global
+  // único controlador global
   static final PomodoroController _instance = PomodoroController._internal();
   factory PomodoroController() => _instance;
 
-  // Declarar variables del temporizador
+  // variables del temporizador
   int _focusMinutes = _defaultFocusMinutes;
   int _breakMinutes = _defaultBreakMinutes;
   late int _secondsLeft;
@@ -40,18 +35,18 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   bool _isRunning = false; 
   bool _isFocusMode = true; 
 
-  // Declarar variables del historial de estudio
+  // variables historial de estudio
   int minutosHoy = 0;
   int minutosTotales = 0;
 
-  // Declarar controladores multimedia
+  // controladores multimedia
   VideoPlayerController? estudioController;
   VideoPlayerController? descansoController;
   final AudioPlayer _musicPlayer = AudioPlayer(); 
   CancionPomodoro? _cancionSeleccionada;
   String? _rutaAudioCargada;
 
-  // Declarar variables de sistema y comunicación nativa
+  // variables sistema y comunicación nativa
   bool _isInitialized = false; 
   final ReceivePort _receivePort = ReceivePort(); 
 
@@ -61,7 +56,6 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     return Platform.isAndroid; 
   }
 
-  // Definir métodos de acceso a las variables (Getters)
   int get focusMinutes => _focusMinutes;
   int get breakMinutes => _breakMinutes;
   int get secondsLeft => _secondsLeft;
@@ -71,7 +65,6 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   bool get videoDescansoInicializado => descansoController?.value.isInitialized ?? false;
   CancionPomodoro? get cancionSeleccionada => _cancionSeleccionada;
 
-  // Inicializar constructor interno privado
   PomodoroController._internal() {
     _secondsLeft = _defaultFocusMinutes * 60;
   }
@@ -88,14 +81,14 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
       IsolateNameServer.removePortNameMapping('pomodoro_port');
       IsolateNameServer.registerPortWithName(_receivePort.sendPort, 'pomodoro_port');
       
-      // Escuchar señales de Play/Pausa desde el puerto nativo
+      // Escuchar Play/Pausa 
       _receivePort.listen((message) {
         if (message == "TOGGLE") {
           startStopTimer(); 
         }
       });
 
-      // Escuchar señales de Play/Pausa como respaldo desde el plugin
+      // Escuchar Play/Pausa 
       FlutterOverlayWindow.overlayListener.listen((event) {
         if (event == "TOGGLE") {
           startStopTimer(); 
@@ -136,7 +129,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // Enviar tiempo y estado actual al widget flotante invisible
+  // Enviar tiempo y estado actual al widget flotante 
   void _sincronizarRelojFlotante() async {
     if (!_soportaBurbujaFlotante) return; 
 
@@ -147,7 +140,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  // Forzar destrucción de la ventana flotante en el sistema operativo
+  // Forzar destrucción de la ventana flotante
   void _matarRelojFlotante() {
     if (!_soportaBurbujaFlotante) return; 
 
@@ -185,7 +178,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     });
   }
 
-  // Reproducir o detener archivo de audio según estado del temporizador
+  // Reproducir o detener archivo de audio según estado temporizador
   Future<void> _gestionarMusicaDeFondo() async {
     // Detener música si no hay pista válida o el reloj está pausado
     if (_cancionSeleccionada == null || 
@@ -218,7 +211,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  // Guardar nueva selección musical en persistencia y aplicar cambios
+  // Guardar selección musical y aplicar cambios
   Future<void> seleccionarCancion(CancionPomodoro cancion) async {
     _cancionSeleccionada = cancion;
     final prefs = await SharedPreferences.getInstance();
@@ -256,7 +249,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     PomodoroService.sumarTiempoAlHistorial(minutos);
   }
 
-  // Cargar activos mp4 en memoria
+  // Cargar activos mp4 
   void _initializeVideos() {
     estudioController = VideoPlayerController.asset('assets/images/pomodoro_estudio.mp4',
         videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true))
@@ -319,7 +312,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
         _gestionarMusicaDeFondo(); 
         _showCompletionNotification(); 
         
-        // --- CORRECCIÓN: Iniciar latido de pausa automáticamente al terminar el bloque ---
+        // Iniciar pausa automáticamente al terminar el bloque
         if (_soportaBurbujaFlotante) {
           _latidoEnPausaTimer?.cancel();
           _latidoEnPausaTimer = Timer.periodic(const Duration(seconds: 2), (_) {
@@ -344,7 +337,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     _sincronizarRelojFlotante(); 
     notifyListeners();
 
-    // Mantener comunicación viva enviando latidos mientras está pausado
+    // Mantener comunicación viva 
     if (_soportaBurbujaFlotante) {
       _latidoEnPausaTimer?.cancel();
       _latidoEnPausaTimer = Timer.periodic(const Duration(seconds: 2), (_) {
@@ -364,7 +357,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
 
   // Modificar duración objetivo desde los selectores interactivos
   void updateDuration({required bool isFocus, required int minutes}) {
-    // Aplicar límites numéricos permitidos
+    // límites numéricos permitidos
     if (isFocus) {
       _focusMinutes = minutes.clamp(1, 180);
     } else {
