@@ -8,7 +8,7 @@ import 'firebase_options.dart';
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 void main() async {
-  // Asegurarse de que Flutter está listo antes de arrancar nada
+  // Asegurar que Flutter está listo antes de arrancar nada
   WidgetsFlutterBinding.ensureInitialized();
   
   // Encender Firebase con archivo de configuración generado
@@ -16,13 +16,19 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  const AndroidInitializationSettings androidInitializationSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+  // Configurar los ajustes iniciales con el icono correcto
+  const AndroidInitializationSettings androidInitializationSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
   const DarwinInitializationSettings iosInitializationSettings = DarwinInitializationSettings();
   const InitializationSettings initializationSettings = InitializationSettings(
     android: androidInitializationSettings,
     iOS: iosInitializationSettings,
   );
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  // --- Solicitar permiso de notificaciones ---
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.requestNotificationsPermission();
 
   // Arrancar app
   runApp(const PedrApp());
@@ -33,6 +39,7 @@ class PedrApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Retornar la estructura base de la aplicación
     return MaterialApp(
       title: 'PedrApp',
       debugShowCheckedModeBanner: false,
@@ -45,10 +52,13 @@ class PedrApp extends StatelessWidget {
   }
 }
 
-// Reloj flotante del pomodoro
+// Configurar el punto de entrada para el reloj flotante del pomodoro
 @pragma("vm:entry-point")
 void overlayMain() {
+  // Asegurar la inicialización del motor en este proceso paralelo
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Arrancar lienzo gráfico exclusivo para la burbuja flotante
   runApp(
     const MaterialApp(
       debugShowCheckedModeBanner: false,
