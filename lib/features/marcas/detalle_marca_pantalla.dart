@@ -205,9 +205,14 @@ class _DetalleMarcaPantallaState extends State<DetalleMarcaPantalla> {
                 ),
               ),
               
-              // línea divisoria c
-              Divider(color: widget.colorFondo, height: 1, thickness: 1),
-
+              // línea divisoria 
+              Divider(
+                color: widget.colorFondo, 
+                height: 1, 
+                thickness: 1, 
+                indent: 20,     // espacio libre a la izquierda
+                endIndent: 20,  // espacio libre a la derecha
+              ),
               // LISTA HISTORIAL 
               Expanded(
                 //  Mostrar texto si no hay marcas; mostrar lista si hay registros

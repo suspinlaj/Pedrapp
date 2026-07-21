@@ -125,6 +125,9 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
     return DefaultTabController(
       length: 2, // Indicar 2 pestañas totales
       child: Scaffold(
+        // --- APLICAR FONDO BLANCO PURO AQUÍ ---
+        backgroundColor: Colors.white,
+        
         appBar: AppBar(
           toolbarHeight: 70.0, 
           centerTitle: false,
@@ -169,7 +172,7 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
                 // Dibujar línea blanca superpuesta para la pestaña activa
                 const TabBar(
                   labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white70,
+                  unselectedLabelColor: Colors.white,
                   indicatorColor: Colors.white, // Pintar línea de pestaña activa
                   indicatorWeight: 3, // Igualar grosor a la línea gris para taparla exactamente
                   tabs: [
@@ -321,11 +324,11 @@ class _GridCategorias extends StatelessWidget {
         final cat = categorias[index];
         final colorBoton = colores[index % colores.length];
 
+        // CUADRADOS CATEGORIASs
         return Container(
-          // --- BORDE CUADROS ---
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: Colores.gris, width: 3),
+            border: Border.all(color: Colores.gris, width: 2),
             boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(2, 2))],
           ),
           child: Material(
