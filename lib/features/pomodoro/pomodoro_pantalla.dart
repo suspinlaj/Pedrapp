@@ -75,7 +75,13 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
   Widget build(BuildContext context) {
     // Variables para hacer que la pantalla se adapte al tamaño del móvil o tablet
     final size = MediaQuery.of(context).size;
-    final double videoSize = size.width > 400 ? 280.0 : size.width * 0.73;
+    // Escalar el tamaño del vídeo dependiendo del formato
+    final double videoSize = size.width > 800 
+        ? 350.0 // Tamaño Web/Escritorio
+        : size.width > 500 
+            ? 250.0 // Tamaño Tablets
+            : size.width * 0.73; // Tamaño Móviles 
+            
     final double paddingVertical = size.height * 0.04;
 
     // Cada vez que el reloj resta un segundo, redibuja esta pantalla automáticamente.
