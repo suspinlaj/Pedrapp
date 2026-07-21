@@ -15,11 +15,11 @@ class MarcasPantalla extends StatefulWidget {
 class _MarcasPantallaState extends State<MarcasPantalla> {
   final MarcasService _marcasServicio = MarcasService();
   
-  // rueda de carga mientras se descargan los datos de Firebase
+  // Mostrar rueda de carga mientras se descargan los datos de Firebase
   bool cargando = true;
 
-  // Definir qué pruebas hay, sus iconos y objetivos por defecto.
-  // Si Firebase está vacío, se guardará esto.
+  // Definir qué pruebas hay, sus iconos y objetivos por defecto
+  // Si Firebase está vacío, se guardará esto
   List<CategoriaMarca> misCategorias = [
     CategoriaMarca(id: "natacion_50", nombre: "Natacion 50", icono: Icons.waves, objetivo: 30.0),
     CategoriaMarca(id: "natacion_100", nombre: "Natacion 100", icono: Icons.pool, objetivo: 65.0),
@@ -32,7 +32,7 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
     CategoriaMarca(id: "cuerda", nombre: "Cuerda", icono: Icons.fitness_center, objetivo: 9.0),
   ];
 
-  // Colores que se irá asignando en orden a cada categoría de la lista
+  // Definir colores que se irán asignando en orden a cada categoría de la lista
   final List<Color> paletaColores = [
     Colors.blue.shade400, Colors.cyan.shade400, Colors.lightBlue.shade400, 
     Colors.orange.shade400, Colors.deepOrange.shade400, Colors.red.shade400, 
@@ -45,7 +45,7 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
     _cargarDatosReales();
   }
 
-  // Descarga los datos de Firebase en orden a mi lista
+  // Descargar los datos de Firebase en orden a la lista local
   void _cargarDatosReales() async {
     // --- ACTUALIZAR AL BORRAR ---
     List<CategoriaMarca> plantillaBase = misCategorias.where((c) => !c.id.startsWith('custom_')).toList();
@@ -72,7 +72,7 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
       Icons.diamond
     ];
 
-    // Extraemos de la nube SOLO las que sean nuevas
+    // Extraer de la nube SOLO las categorías que sean nuevas
     final Set<String> idsPlantilla = plantillaBase.map((p) => p.id).toSet();
     List<CategoriaMarca> categoriasPersonalizadas = [];
     
@@ -82,12 +82,12 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
       }
     }
 
-    // ordenar por antigüedad 
+    // Ordenar elementos personalizados por antigüedad 
     categoriasPersonalizadas.sort((a, b) => a.id.compareTo(b.id));
 
-    // añadir a la cola asignándoles el icono por orden de rotación
+    // Añadir a la cola asignándoles el icono por orden de rotación
     for (int i = 0; i < categoriasPersonalizadas.length; i++) {
-      // El operador % hace que si i=5, vuelva a coger el icono 0. 
+      // Usar operador % para reiniciar el índice si supera el total de iconos 
       categoriasPersonalizadas[i].icono = iconosGenericos[i % iconosGenericos.length];
       listaOrdenada.add(categoriasPersonalizadas[i]);
     }
@@ -98,15 +98,15 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
     });
   }
 
-  // diálogo y guardar la nueva categoría
+  // Mostrar diálogo y guardar la nueva categoría en el sistema
   void _mostrarDialogoNuevaCategoria() {
     showDialog(
       context: context,
       builder: (context) => DialogoNuevaCategoria(
         colorFondo: Colores.rojo,
         onSave: (nuevaCategoria) async {
-          await _marcasServicio.guardarCategoria(nuevaCategoria); // Guarda en nube
-          _cargarDatosReales(); // Recarga la pantalla
+          await _marcasServicio.guardarCategoria(nuevaCategoria); // Guardar en nube
+          _cargarDatosReales(); // Recargar la pantalla para mostrarla
         },
       ),
     );
@@ -114,16 +114,16 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
 
   @override
   Widget build(BuildContext context) {
-    // Si todavía está descargando, muestra la rueda roja girando en el centro
+    // Mostrar la rueda roja girando en el centro si todavía está descargando
     if (cargando) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator(color: Colores.rojo)),
       );
     }
 
-    // Para tener las pestañas  (Resumen / Categorías)
+    // Estructurar pantalla con pestañas (Resumen / Categorías)
     return DefaultTabController(
-      length: 2, //  2 pestañas
+      length: 2, // Indicar 2 pestañas totales
       child: Scaffold(
         appBar: AppBar(
           toolbarHeight: 70.0, 
@@ -156,7 +156,7 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
             child: Stack(
               alignment: Alignment.bottomCenter, 
               children: [
-                // borde
+                // Dibujar borde inferior gris
                 Positioned(
                   left: 0,
                   right: 0,
@@ -166,12 +166,12 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
                     color: Colores.gris,
                   ),
                 ),
-                //  línea blanca por encima
+                // Dibujar línea blanca superpuesta para la pestaña activa
                 const TabBar(
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white70,
-                  indicatorColor: Colors.white, //  línea  pestaña activa
-                  indicatorWeight: 3, // Mismo grosor que la gris para taparla exacta
+                  indicatorColor: Colors.white, // Pintar línea de pestaña activa
+                  indicatorWeight: 3, // Igualar grosor a la línea gris para taparla exactamente
                   tabs: [
                     Tab(icon: Icon(Icons.leaderboard), text: "Resumen"),
                     Tab(icon: Icon(Icons.grid_view), text: "Categorías"),
@@ -181,15 +181,15 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
             ),
           ),
         ),
-        // El contenido de las pestañas
+        // Distribuir el contenido interno según la pestaña activa
         body: TabBarView(
           children: [
-            // Pestaña 1: La lista de resumen (sin botón flotante)
+            // Pestaña 1: Mostrar la lista de resumen en cajas individuales
             _ListaResumen(categorias: misCategorias, colores: paletaColores),
             
-            // Pestaña 2: La cuadrícula de botones para entrar a los detalles
+            // Pestaña 2: Mostrar la cuadrícula de botones para entrar a los detalles
             Scaffold(
-              backgroundColor: Colors.transparent, // Para no tapar el fondo de la app
+              backgroundColor: Colors.transparent, 
               body: _GridCategorias(
                 categorias: misCategorias, 
                 colores: paletaColores,
@@ -213,10 +213,9 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
   }
 }
 
-
 // --- WIDGETS PRIVADOS 
 
-// Lista vertical de la primera pestaña (Resumen)
+// lista vertical resultados
 class _ListaResumen extends StatelessWidget {
   final List<CategoriaMarca> categorias;
   final List<Color> colores;
@@ -225,15 +224,13 @@ class _ListaResumen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Centrar y limitar ancho de la lista para que no quede deforme en tablets 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600), 
-        child: ListView.separated(
-          physics: const BouncingScrollPhysics(), // Scroll con rebote suave 
+        constraints: const BoxConstraints(maxWidth: 800), 
+        child: ListView.builder(
+          physics: const BouncingScrollPhysics(), //  scroll con rebote 
           padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 80),
           itemCount: categorias.length,
-          separatorBuilder: (context, index) => const Divider(color: Colores.rojo),
           itemBuilder: (context, index) {
             final cat = categorias[index];
             final colorCategoria = colores[index % colores.length]; 
@@ -241,24 +238,40 @@ class _ListaResumen extends StatelessWidget {
             final objetivo = CategoriaMarca.formatearTiempo(cat.objetivo);
             final estaLogrado = cat.progreso >= 1.0;
 
-            // Cada fila de la lista (Icono + Títulos + Tiempo derecho)
-            return ListTile(
-              leading: Icon(cat.icono, color: colorCategoria, size: 30), 
-              title: Text(cat.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              subtitle: Text("Objetivo: $objetivo"),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    mejor == "--:--" ? "Sin datos" : mejor, 
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: estaLogrado ? Colors.green : Colores.rojo)
-                  ),
-                  // Si cumplió el objetivo, tick verde extra
-                  if (estaLogrado) const Padding(
-                    padding: EdgeInsets.only(left: 8.0),
-                    child: Icon(Icons.check_circle, color: Colors.green),
+            // Cada fila de la lista
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12), // Separacion
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16), // borde 
+                border: Border.all(color: colorCategoria, width: 2), //  color de la categoría 
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
                   ),
                 ],
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(cat.icono, color: colorCategoria, size: 32), 
+                title: Text(cat.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                subtitle: Text("Objetivo: $objetivo"),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      mejor == "--:--" ? "Sin datos" : mejor, 
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: estaLogrado ? Colors.green : Colores.rojo)
+                    ),
+                    // Mostrar tick verde extra si se cumplió el objetivo
+                    if (estaLogrado) const Padding(
+                      padding: EdgeInsets.only(left: 8.0),
+                      child: Icon(Icons.check_circle, color: Colors.green),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -268,11 +281,11 @@ class _ListaResumen extends StatelessWidget {
   }
 }
 
-// Cuadrícula de la segunda pestaña (Categorías)
+// Construir cuadrícula de la segunda pestaña (Categorías)
 class _GridCategorias extends StatelessWidget {
   final List<CategoriaMarca> categorias;
   final List<Color> colores;
-  final VoidCallback alVolver; // cuando se cierre la pantalla de detalles
+  final VoidCallback alVolver; // Ejecutar cuando se cierre la pantalla de detalles
 
   const _GridCategorias({
     required this.categorias, 
@@ -282,16 +295,23 @@ class _GridCategorias extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- Calcular ancho y decidir las columnas ---
+    // Calcular ancho de pantalla para decidir la cantidad de columnas dinámicamente
     final anchoPantalla = MediaQuery.of(context).size.width;
-    final columnasDinamicas = anchoPantalla > 600 ? 5 : 3;
+    // Responsive
+    final columnasDinamicas = anchoPantalla > 1200 
+        ? 6 
+        : anchoPantalla > 900 
+            ? 5 
+            : anchoPantalla > 600 
+                ? 4 
+                : 3;
 
     return GridView.builder(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 80), 
-      // cuántas columnas y sus espacios
+      // Distribuir elementos indicando cuántas columnas y sus espacios
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columnasDinamicas, // --- RESPONSIVE
+        crossAxisCount: columnasDinamicas, 
         crossAxisSpacing: 10,
         mainAxisSpacing: 10, 
         childAspectRatio: 1, 
@@ -302,8 +322,7 @@ class _GridCategorias extends StatelessWidget {
         final colorBoton = colores[index % colores.length];
 
         return Container(
-          // Diseño del botón
-          // --- BORDE GRIS CUADROS ---
+          // --- BORDE CUADROS ---
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: Colores.gris, width: 3),
@@ -315,12 +334,12 @@ class _GridCategorias extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () async {
-                // Navega al detalle de esa categoría
+                // Navegar al detalle específico de esa categoría
                 await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => DetalleMarcaPantalla(categoria: cat, colorFondo: colorBoton)),
                 );
-                // función para refrescar la pantalla y ver si hay notas nuevas (o si se ha borrado una prueba)
+                // Ejecutar función de refresco para actualizar notas o eliminaciones
                 alVolver(); 
               },
               child: Center(
@@ -331,7 +350,7 @@ class _GridCategorias extends StatelessWidget {
                     children: [
                       Icon(cat.icono, color: Colors.white, size: 36), 
                       const SizedBox(height: 8),
-                      // nombre de la categoría
+                      // Imprimir nombre de la categoría recortando si es muy largo
                       Text(
                         cat.nombre,
                         textAlign: TextAlign.center,
