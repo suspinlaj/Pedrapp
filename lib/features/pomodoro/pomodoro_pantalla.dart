@@ -60,7 +60,7 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
           flag: OverlayFlag.defaultFlag,
           alignment: OverlayAlignment.center,
           visibility: NotificationVisibility.visibilitySecret, 
-          positionGravity: PositionGravity.auto,
+          positionGravity: PositionGravity.none,
           width: 300, 
           height: 300,
         );
@@ -288,7 +288,7 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                                 child: Text(
                                   _controller.isRunning ? 'Pausar' : 'Iniciar',
                                   style: TextStyle(
-                                      color: _controller.isFocusMode ? Colors.white : Colors.black87,
+                                      color: _controller.isFocusMode ? Colors.white : Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20),
                                 ),

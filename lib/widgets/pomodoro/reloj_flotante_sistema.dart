@@ -112,7 +112,7 @@ class _RelojFlotanteSistemaState extends State<RelojFlotanteSistema> {
   Widget build(BuildContext context) {
     // Colores segun si se está estudiando o descansando
     final colorFondo = _isFocusMode ? Colores.rojo : Colores.amarillo;
-    final colorLetra = _isFocusMode ? Colors.white : Colors.black87;
+    final colorLetra = _isFocusMode ? Colors.white : Colors.white;
     final bool mostrarCapaOscura = !_isRunning || _mostrarTemporal;
     final IconData iconoAMostrar = !_isRunning ? Icons.play_arrow : Icons.pause;
 
