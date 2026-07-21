@@ -41,7 +41,7 @@ class SelectorTiempo extends StatelessWidget {
               // boton izquierdo para disminuir el tiempo
               IconButton(
                 icon: const Icon(Icons.remove, size: 20),
-                color: Colores.gris,
+                color: colorTema,
                 onPressed: () {
                   // Calcular nuevo valor restando 5 minutos (con un límite inferior de 1 minuto)
                   int nextValue = (value <= 5) ? 1 : value - 5;
