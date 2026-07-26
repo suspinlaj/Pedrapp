@@ -19,10 +19,24 @@ class PomodoroPantalla extends StatefulWidget {
 class _PomodoroPantallaState extends State<PomodoroPantalla> {
   final PomodoroController _controller = PomodoroController();
 
+  bool isOverlayActive = false;
+
   @override
   void initState() {
     super.initState();
     _controller.inicializar(context);
+    _checkOverlayPermission();
+  }
+
+  /// Comprueba si el permiso de overlay ya está concedido al entrar
+  Future<void> _checkOverlayPermission() async {
+    if (_soportaBurbujaFlotante) {
+      bool? isGranted = await FlutterOverlayWindow.isPermissionGranted();
+      bool isActive = await FlutterOverlayWindow.isActive();
+      setState(() {
+        isOverlayActive = isGranted == true && isActive;
+      });
+    }
   }
 
   // --- Comprobador universal ---
@@ -32,38 +46,42 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
     return Platform.isAndroid; // iOS tampoco, solo Android
   }
 
+  // --- MÉTODOS DE LA BURBUJA ---
+  Future<void> _mostrarBurbuja() async {
+    if (!await FlutterOverlayWindow.isActive()) {
+      await FlutterOverlayWindow.showOverlay(
+        enableDrag: true, // Permitir moverla con el dedo
+        overlayTitle: "Pedrapp",
+        overlayContent: "⌛",
+        flag: OverlayFlag.defaultFlag,
+        alignment: OverlayAlignment.center,
+        visibility: NotificationVisibility.visibilitySecret,
+        positionGravity: PositionGravity.none,
+        width: 200,
+        height: 200,
+      );
+    }
+  }
+
+  Future<void> _cerrarBurbuja() async {
+    if (await FlutterOverlayWindow.isActive()) {
+      await FlutterOverlayWindow.closeOverlay();
+    }
+  }
+
   // --- BOTÓN PLAY/PAUSA ---
   Future<void> _iniciarPomodoroGlobal() async {
-    // Si estamos en la Web, en iOS o en Escritorio,  iniciamos el reloj y NO se abre la burbuja
+    // Si estamos en la Web, en iOS o en Escritorio, iniciamos el reloj y NO se abre la burbuja
     if (!_soportaBurbujaFlotante) {
       _controller.startStopTimer();
-      return; 
+      return;
     }
 
-    // EN ANDROID 
+    // EN ANDROID
     if (!_controller.isRunning) {
-      // Saber si se dio permiso para dibujar la burbuja flotante
-      bool? isGranted = await FlutterOverlayWindow.isPermissionGranted();
-      
-      if (isGranted != true) {
-        // Si no hay permiso, abrir  ajustes y cancelar Play
-        await FlutterOverlayWindow.requestPermission();
-        return; 
-      }
-      
-      // Si hay permiso y la burbuja no está abierta ya, dibujarla en pantalla
-      if (await FlutterOverlayWindow.isActive() == false) {
-        await FlutterOverlayWindow.showOverlay(
-          enableDrag: true, // Permitir moverla con el dedo
-          overlayTitle: "Pedrapp", 
-          overlayContent: "⌛", 
-          flag: OverlayFlag.defaultFlag,
-          alignment: OverlayAlignment.center,
-          visibility: NotificationVisibility.visibilitySecret, 
-          positionGravity: PositionGravity.none,
-          width: 300, 
-          height: 300,
-        );
+      // Si la preferencia está activa, mostramos la burbuja
+      if (isOverlayActive) {
+        await _mostrarBurbuja();
       }
     }
 
@@ -76,12 +94,12 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
     // Variables para hacer que la pantalla se adapte al tamaño del móvil o tablet
     final size = MediaQuery.of(context).size;
     // Escalar el tamaño del vídeo dependiendo del formato
-    final double videoSize = size.width > 800 
+    final double videoSize = size.width > 800
         ? 350.0 // Tamaño Web/Escritorio
-        : size.width > 500 
+        : size.width > 500
             ? 250.0 // Tamaño Tablets
-            : size.width * 0.73; // Tamaño Móviles 
-            
+            : size.width * 0.73; // Tamaño Móviles
+
     final double paddingVertical = size.height * 0.04;
 
     // Cada vez que el reloj resta un segundo, redibuja esta pantalla automáticamente.
@@ -94,8 +112,8 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
 
         return Scaffold(
           backgroundColor: Colors.white,
-          
-          // --- BARRA SUPERIOR  ---
+
+          // --- BARRA SUPERIOR ---
           appBar: AppBar(
             titleSpacing: 0,
             leading: IconButton(
@@ -114,7 +132,50 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
             shape: const Border(bottom: BorderSide(color: Colores.gris, width: 3)),
             elevation: 0,
             actions: [
-              // Botón estadísticas 
+              // Muestra el switch únicamente si la plataforma soporta burbuja
+              if (_soportaBurbujaFlotante)
+                IconButton(
+                  icon: Icon(
+                    Icons.layers,
+                    // Verde si está activo, blanco/opaco si está desactivado
+                    color: isOverlayActive ? Colors.white : const Color.fromARGB(185, 234, 178, 182),
+                    size: 28,
+                  ),
+                  tooltip: isOverlayActive ? 'Burbuja activada' : 'Burbuja desactivada',
+                  onPressed: () async {
+                    final bool nuevoEstado = !isOverlayActive;
+
+                    if (nuevoEstado) {
+                      // 1. Verificar si tenemos permiso otorgado por Android
+                      bool? isGranted = await FlutterOverlayWindow.isPermissionGranted();
+
+                      if (isGranted != true) {
+                        // Si no hay permiso, redirigimos a los ajustes
+                        await FlutterOverlayWindow.requestPermission();
+                        // Re-comprobar si el usuario lo activó
+                        isGranted = await FlutterOverlayWindow.isPermissionGranted();
+                      }
+
+                      if (isGranted == true) {
+                        setState(() {
+                          isOverlayActive = true;
+                        });
+
+                        // Si el tiempo ya está corriendo, mostramos la burbuja de inmediato
+                        if (_controller.isRunning) {
+                          await _mostrarBurbuja();
+                        }
+                      }
+                    } else {
+                      // Al desactivar, cerramos la burbuja si estaba activa
+                      await _cerrarBurbuja();
+                      setState(() {
+                        isOverlayActive = false;
+                      });
+                    }
+                  },
+                ),
+              // Botón estadísticas
               IconButton(
                 icon: const Icon(Icons.bar_chart, color: Colors.white, size: 30),
                 tooltip: 'Ver historial',
@@ -131,10 +192,9 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
               const SizedBox(width: 5),
             ],
           ),
-          
+
           body: Stack(
             children: [
-              
               // --- DIBUJO VIDEO ---
               Positioned(
                 bottom: 0,
@@ -145,7 +205,7 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                   // Muestra un vídeo u otro dependiendo del modo
                   child: mostrarEstudio
                       ? (_controller.videoEstudioInicializado
-                          ? FittedBox( 
+                          ? FittedBox(
                               fit: BoxFit.cover,
                               child: SizedBox(
                                 width: _controller.estudioController!.value.size.width,
@@ -171,12 +231,11 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
               SafeArea(
                 child: Align(
                   alignment: Alignment.topCenter,
-                  child: SingleChildScrollView( 
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.only(top: 40, bottom: 40),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        
                         // --- FRASE PRINCIPAL ---
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -202,12 +261,12 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                             border: Border.all(color: colorTema, width: 4),
                           ),
                           child: Text(
-                            _controller.formatTime(), // Pide el tiempo formateado al controlador (ej. 25:00)
+                            _controller.formatTime(),
                             style: TextStyle(
                               fontSize: size.width > 350 ? 80 : 65,
                               fontWeight: FontWeight.bold,
                               color: colorTema,
-                              fontFeatures: const [FontFeature.tabularFigures()], // Evita que los números "salten" al cambiar
+                              fontFeatures: const [FontFeature.tabularFigures()],
                             ),
                           ),
                         ),
@@ -244,16 +303,14 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                           spacing: 15,
                           runSpacing: 15,
                           children: [
-                            
                             // BOTÓN DE MÚSICA
                             GestureDetector(
                               onTap: () {
-                                // Abre la pestaña deslizable
                                 showModalBottomSheet(
                                   context: context,
-                                  backgroundColor: Colors.transparent, 
+                                  backgroundColor: Colors.transparent,
                                   builder: (context) => SelectorMusicaSheet(
-                                    controller: _controller, 
+                                    controller: _controller,
                                   ),
                                 );
                               },
@@ -267,22 +324,21 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                                 child: ListenableBuilder(
                                   listenable: _controller,
                                   builder: (context, _) {
-                                    // Cambiar icono y  color si hay música seleccionada
-                                    final hayMusica = _controller.cancionSeleccionada != null && 
-                                                      _controller.cancionSeleccionada!.id != 'ninguno';
+                                    final hayMusica = _controller.cancionSeleccionada != null &&
+                                        _controller.cancionSeleccionada!.id != 'ninguno';
                                     return Icon(
-                                      hayMusica ? Icons.headset_mic : Icons.music_note, 
-                                      color: hayMusica ? Colores.rojo : Colores.gris, 
-                                      size: 30
+                                      hayMusica ? Icons.headset_mic : Icons.music_note,
+                                      color: hayMusica ? Colores.rojo : Colores.gris,
+                                      size: 30,
                                     );
-                                  }
+                                  },
                                 ),
                               ),
                             ),
 
                             // BOTÓN DE INICIAR / PAUSAR
                             GestureDetector(
-                              onTap: _iniciarPomodoroGlobal, // Llama a la función principal 
+                              onTap: _iniciarPomodoroGlobal,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                                 decoration: BoxDecoration(
@@ -290,21 +346,24 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: Colores.gris, width: 3),
                                 ),
-                                // TEXTOS
                                 child: Text(
                                   _controller.isRunning ? 'Pausar' : 'Iniciar',
                                   style: TextStyle(
-                                      color: _controller.isFocusMode ? Colors.white : Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20),
+                                    color: _controller.isFocusMode ? Colors.white : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                  ),
                                 ),
                               ),
                             ),
 
-                            // BOTÓN REINICIAR 
+                            // BOTÓN REINICIAR
                             GestureDetector(
                               onTap: () {
-                                _controller.resetTimer(); // Reinicia el tiempo y mata la burbuja
+                                _controller.resetTimer();
+                                if (_soportaBurbujaFlotante) {
+                                  _cerrarBurbuja();
+                                }
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(12),

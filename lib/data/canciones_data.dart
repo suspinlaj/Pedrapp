@@ -19,7 +19,7 @@ class CancionesData {
     CancionPomodoro(
       id: 'pokemon', 
       nombre: 'Pokemon', 
-      assetPath: 'assets/audio/pokemon.mp3', 
+      assetPath: 'assets/audio/pokemon2.mp3', 
       icono: Icons.catching_pokemon,
     ),
     CancionPomodoro(
