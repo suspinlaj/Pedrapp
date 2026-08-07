@@ -34,21 +34,21 @@ Pantalla dedicada a llevar el seguimiento de los entrenamientos físicos.
 ## Capturas
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/b853218e-8177-4f2c-a5c5-621b28b67f5a" width="200" alt="Portada PedrApp con animación" />
+  <img src="https://github.com/user-attachments/assets/6c8a41da-3d0f-4a02-913b-21c065366fae" width="200" alt="Portada" />
   &nbsp;
-  <img src="https://github.com/user-attachments/assets/3479847d-30be-40fe-8399-560f8fde38c0" width="200" alt="Menú de funciones" />
+  <img src="https://github.com/user-attachments/assets/3479847d-30be-40fe-8399-560f8fde38c0" width="200" alt="Menú" />
   &nbsp;
-  <img src="https://github.com/user-attachments/assets/79602205-6f4e-4768-8ccf-11e94b2740cf" width="200" alt="Mapa de lugares" />
+  <img src="https://github.com/user-attachments/assets/b853218e-8177-4f2c-a5c5-621b28b67f5a" width="200" alt="Mapa" />
   &nbsp;
-  <img src="https://github.com/user-attachments/assets/ffd0c07e-e5d3-42ba-a138-89d9db7b846d" width="200" alt="Buscador inteligente" />
+  <img src="https://github.com/user-attachments/assets/4edd930c-e056-494d-aa33-cab825837ff9" width="200" alt="Buscar lugar" />
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/4edd930c-e056-494d-aa33-cab825837ff9" width="200" alt="Pomodoro de estudio" />
+  <img src="https://github.com/user-attachments/assets/546a2f89-e3c0-48c3-96ac-674f3870a793" width="200" alt="Pomodoro" />
   &nbsp;
-  <img src="https://github.com/user-attachments/assets/546a2f89-e3c0-48c3-96ac-674f3870a793" width="200" alt="Cuadrícula Categorías Marcas" />
+  <img src="https://github.com/user-attachments/assets/ffd0c07e-e5d3-42ba-a138-89d9db7b846d" width="200" alt="Categorias" />
   &nbsp;
-  <img src="https://github.com/user-attachments/assets/6c8a41da-3d0f-4a02-913b-21c065366fae" width="200" alt="Resumen Marcas" />
+  <img src="https://github.com/user-attachments/assets/79602205-6f4e-4768-8ccf-11e94b2740cf" width="200" alt="Historial Marcas" />
   &nbsp;
   <img src="https://github.com/user-attachments/assets/d4b9bed3-8941-4b96-a5a4-e2076de06fa3" width="200" alt="Detalle e Historial de Marca" />
 </p>
