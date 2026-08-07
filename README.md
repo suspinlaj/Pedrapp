@@ -19,7 +19,7 @@ Actualmente la app es plenamente funcional con tres módulos principales (Mapa, 
 - **Temporizador adaptable:** Permite sumar o restar minutos fácilmente para los bloques de estudio y descanso.
 - **Arte dinámico:** La ilustración principal cambia de forma automática dependiendo de si el usuario se encuentra en tiempo de estudio o de descanso.
 - **Música integrada:** Reproductor de música para la concentración que sigue sonando en segundo plano, aunque se salga de la aplicación.
-- **Reloj Flotante:** Al iniciar, aparece una burbuja flotante con la cuenta atrás que se superpone a los apuntes o a cualquier otra aplicación. También es posible pausar el tiempo directamente desde ahí
+- **Reloj Flotante:** Al iniciar, aparece una burbuja flotante con la cuenta atrás que se superpone a los apuntes o a cualquier otra aplicación. También es posible pausar el tiempo directamente desde ahí.
 - **Notificaciones:** Avisos al iniciar y al terminar cada bloque para indicar la siguiente tarea. Las notificaciones incluyen la cuenta atrás en tiempo real.
 - **Seguimiento:** Pequeño historial que muestra el tiempo estudiado en el día actual y la suma total histórica.
 
@@ -34,25 +34,25 @@ Pantalla dedicada a llevar el seguimiento de los entrenamientos físicos.
 ## Capturas
 
 <p align="center">
-  <img src="WhatsApp Image 2026-08-07 at 20.46.07.jpeg" width="280" alt="Portada PedrApp con animación" />
+  <img src="https://github.com/user-attachments/assets/b853218e-8177-4f2c-a5c5-621b28b67f5a" width="280" alt="Portada PedrApp con animación" />
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="WhatsApp Image 2026-08-07 at 20.46.07 (1).jpeg" width="280" alt="Menú de funciones" />
+  <img src="https://github.com/user-attachments/assets/3479847d-30be-40fe-8399-560f8fde38c0" width="280" alt="Menú de funciones" />
 </p>
 
 <p align="center">
-  <img src="WhatsApp Image 2026-08-07 at 20.46.08 (1).jpeg" width="280" alt="Mapa de lugares" />
+  <img src="https://github.com/user-attachments/assets/79602205-6f4e-4768-8ccf-11e94b2740cf" width="280" alt="Mapa de lugares" />
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="WhatsApp Image 2026-08-07 at 20.46.08.jpeg" width="280" alt="Buscador inteligente" />
+  <img src="https://github.com/user-attachments/assets/ffd0c07e-e5d3-42ba-a138-89d9db7b846d" width="280" alt="Buscador inteligente" />
 </p>
 
 <p align="center">
-  <img src="WhatsApp Image 2026-08-07 at 20.46.08 (3).jpeg" width="280" alt="Pomodoro de estudio" />
+  <img src="https://github.com/user-attachments/assets/4edd930c-e056-494d-aa33-cab825837ff9" width="280" alt="Pomodoro de estudio" />
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="WhatsApp Image 2026-08-07 at 20.46.08 (2).jpeg" width="280" alt="Cuadrícula Categorías Marcas" />
+  <img src="https://github.com/user-attachments/assets/546a2f89-e3c0-48c3-96ac-674f3870a793" width="280" alt="Cuadrícula Categorías Marcas" />
 </p>
 
 <p align="center">
-  <img src="WhatsApp Image 2026-08-07 at 20.46.07 (3).jpeg" width="280" alt="Resumen Marcas" />
+  <img src="https://github.com/user-attachments/assets/6c8a41da-3d0f-4a02-913b-21c065366fae" width="280" alt="Resumen Marcas" />
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="WhatsApp Image 2026-08-07 at 20.46.05.jpeg" width="280" alt="Detalle e Historial de Marca" />
+  <img src="https://github.com/user-attachments/assets/d4b9bed3-8941-4b96-a5a4-e2076de06fa3" width="280" alt="Detalle e Historial de Marca" />
 </p>
