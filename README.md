@@ -1,4 +1,4 @@
-# PedrApp ⛑
+# PedrApp ঌ
 
 App personal diseñada a medida para llevar un **seguimiento integral de estudio, entrenamientos y localizaciones**. Está pensada de forma exclusiva para un único usuario, adaptándose a sus necesidades específicas para las oposiciones. 
 
