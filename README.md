@@ -23,7 +23,7 @@ Actualmente la app es plenamente funcional con tres módulos principales (Mapa, 
 - **Notificaciones:** Avisos al iniciar y al terminar cada bloque para indicar la siguiente tarea. Las notificaciones incluyen la cuenta atrás en tiempo real.
 - **Seguimiento:** Pequeño historial que muestra el tiempo estudiado en el día actual y la suma total histórica.
 
-### ⏲ Marcas
+### ◴ Marcas
 Pantalla dedicada a llevar el seguimiento de los entrenamientos físicos.
 - **Resumen general:** Lista rápida para visualizar todas las pruebas, la marca objetivo y el mejor tiempo. Si se supera el objetivo, aparecerá un tick verde de prueba superada.
 - **Categorías:** Permite crear nuevas pruebas personalizadas indicando un nombre y su meta de tiempo.
