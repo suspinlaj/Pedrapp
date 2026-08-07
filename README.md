@@ -46,9 +46,9 @@ Pantalla dedicada a llevar el seguimiento de los entrenamientos físicos.
 <p align="center">
   <img src="https://github.com/user-attachments/assets/546a2f89-e3c0-48c3-96ac-674f3870a793" width="200" alt="Pomodoro" />
   &nbsp;
-  <img src="https://github.com/user-attachments/assets/ffd0c07e-e5d3-42ba-a138-89d9db7b846d" width="200" alt="Categorias" />
-  &nbsp;
   <img src="https://github.com/user-attachments/assets/79602205-6f4e-4768-8ccf-11e94b2740cf" width="200" alt="Historial Marcas" />
+  &nbsp;
+  <img src="https://github.com/user-attachments/assets/ffd0c07e-e5d3-42ba-a138-89d9db7b846d" width="200" alt="Categorias" />
   &nbsp;
   <img src="https://github.com/user-attachments/assets/d4b9bed3-8941-4b96-a5a4-e2076de06fa3" width="200" alt="Detalle e Historial de Marca" />
 </p>
