@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:pedrapp/widgets/mapa_widgets/mapa_base.dart';
 import 'package:pedrapp/widgets/ubicacion/dialog_identidad.dart'; 
 import 'package:shared_preferences/shared_preferences.dart'; 
 import 'package:pedrapp/core/colores.dart';
@@ -226,10 +227,8 @@ class _UbicacionCompartidaPantallaState extends State<UbicacionCompartidaPantall
               ),
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                subdomains: const ['a', 'b', 'c', 'd'],
-              ),
+              // --- MAPA ---
+              const MapaBase(),
 
               // --- CAPA INFO GRIS ---
               // Pintamos primero la lista fija de tus lugares en gris de fondo
