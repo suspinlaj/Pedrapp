@@ -131,7 +131,7 @@ class MenuPantalla extends StatelessWidget {
                     // --- HORARIO  ---
                     _BotonMenu(
                       titulo: 'HORARIO',
-                      icono: Icons.fitness_center,
+                      icono: Icons.scoreboard,
                       colorFondo: Colores.rojo,
                       colorTexto: Colors.white,
                       onTap: () => Navigator.push(
