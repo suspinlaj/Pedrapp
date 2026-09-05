@@ -8,6 +8,7 @@ import 'package:pedrapp/widgets/mapa_widgets/dialog_buscar_direccion.dart';
 import 'package:pedrapp/widgets/dialog_eliminar.dart';
 import 'package:pedrapp/widgets/mapa_widgets/dialog_lugar_exacto.dart';
 import 'package:pedrapp/widgets/mapa_widgets/lista_lugares.dart';
+import 'package:pedrapp/widgets/mapa_widgets/mapa_base.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MapaPantalla extends StatefulWidget {
@@ -216,10 +217,10 @@ class _MapaPantallaState extends State<MapaPantalla> {
               ),
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                subdomains: const ['a', 'b', 'c', 'd'],
-              ),
+              // --- MAPA ---
+              const MapaBase(),
+              
+              // --- MARCADORES (PINES ROJOS) ---
               MarkerLayer(markers: _marcadores),
             ],
           ),
