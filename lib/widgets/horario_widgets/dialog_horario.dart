@@ -34,6 +34,8 @@ class _DialogoHorarioState extends State<DialogoHorario> {
     _tituloController = TextEditingController(text: _isEditing ? widget.bloqueAEditar!.titulo : '');
     _inicio = _isEditing ? widget.bloqueAEditar!.horaInicio : const TimeOfDay(hour: 16, minute: 0);
     _fin = _isEditing ? widget.bloqueAEditar!.horaFin : const TimeOfDay(hour: 18, minute: 0);
+    
+    // Asignamos por defecto el rojo de la paleta (posición 5 de la lista)
     _colorSeleccionado = _isEditing ? widget.bloqueAEditar!.colorEtiqueta : Colors.red.shade400;
   }
 
@@ -53,7 +55,7 @@ class _DialogoHorarioState extends State<DialogoHorario> {
         side: const BorderSide(color: Colores.rojo, width: 3),
       ),
       title: Text(
-        _isEditing ? 'Editar Bloque' : 'Nuevo Bloque',
+        _isEditing ? 'Editar Bloque' : 'Nuevo BLoque',
         style: const TextStyle(fontFamily: 'Titulo', color: Colores.rojo),
       ),
       content: SingleChildScrollView(
@@ -63,8 +65,14 @@ class _DialogoHorarioState extends State<DialogoHorario> {
             TextField(
               controller: _tituloController,
               decoration: const InputDecoration(
-                labelText: '¿Qué toca hacer?',
-                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colores.rojo)),
+                labelText: '¿Qué toca hacer? Zzz',
+                labelStyle: TextStyle(color: Colores.gris), // Pone las letras en rojo
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colores.gris, width: 1),
+                ),
+                enabledBorder: UnderlineInputBorder( // Sustituye a unfocusedBorder
+                  borderSide: BorderSide(color: Colores.rojo, width: 1),
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -79,7 +87,7 @@ class _DialogoHorarioState extends State<DialogoHorario> {
                     if (seleccion != null) setState(() => _inicio = seleccion);
                   },
                 ),
-                const Icon(Icons.arrow_forward, color: Colores.gris),
+                const Icon(Icons.arrow_forward, color: Colores.rojo),
                 _SelectorHora(
                   etiqueta: 'Fin',
                   hora: _fin,
@@ -97,17 +105,14 @@ class _DialogoHorarioState extends State<DialogoHorario> {
               alignment: WrapAlignment.center,
               spacing: 12.0, 
               runSpacing: 12.0, 
-              children: [
-                _BotonColor(color: Colors.blue.shade400, seleccionado: _colorSeleccionado == Colors.blue.shade400, onTap: () => setState(() => _colorSeleccionado = Colors.blue.shade400)),
-                _BotonColor(color: Colors.cyan.shade400, seleccionado: _colorSeleccionado == Colors.cyan.shade400, onTap: () => setState(() => _colorSeleccionado = Colors.cyan.shade400)),
-                _BotonColor(color: Colors.lightBlue.shade400, seleccionado: _colorSeleccionado == Colors.lightBlue.shade400, onTap: () => setState(() => _colorSeleccionado = Colors.lightBlue.shade400)),
-                _BotonColor(color: Colors.orange.shade400, seleccionado: _colorSeleccionado == Colors.orange.shade400, onTap: () => setState(() => _colorSeleccionado = Colors.orange.shade400)),
-                _BotonColor(color: Colors.deepOrange.shade400, seleccionado: _colorSeleccionado == Colors.deepOrange.shade400, onTap: () => setState(() => _colorSeleccionado = Colors.deepOrange.shade400)),
-                _BotonColor(color: Colors.red.shade400, seleccionado: _colorSeleccionado == Colors.red.shade400, onTap: () => setState(() => _colorSeleccionado = Colors.red.shade400)),
-                _BotonColor(color: Colors.purple.shade400, seleccionado: _colorSeleccionado == Colors.purple.shade400, onTap: () => setState(() => _colorSeleccionado = Colors.purple.shade400)),
-                _BotonColor(color: Colors.deepPurple.shade400, seleccionado: _colorSeleccionado == Colors.deepPurple.shade400, onTap: () => setState(() => _colorSeleccionado = Colors.deepPurple.shade400)),
-                _BotonColor(color: Colors.brown.shade400, seleccionado: _colorSeleccionado == Colors.brown.shade400, onTap: () => setState(() => _colorSeleccionado = Colors.brown.shade400)),
-              ],
+              // Recorremos tu paleta exacta para dibujar los círculos
+              children: Colores.paleta.map((colorDeLista) {
+                return _BotonColor(
+                  color: colorDeLista, 
+                  seleccionado: _colorSeleccionado == colorDeLista, 
+                  onTap: () => setState(() => _colorSeleccionado = colorDeLista)
+                );
+              }).toList(),
             ),
           ],
         ),
@@ -172,7 +177,8 @@ class _SelectorHora extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              border: Border.all(color: Colores.gris),
+              // --- BORDE ROJO ---
+              border: Border.all(color: Colores.rojo, width: 1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text('$h:$m', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -199,7 +205,7 @@ class _BotonColor extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: color.withOpacity(seleccionado ? 1.0 : 0.5),
+          color: color,
           shape: BoxShape.circle,
           border: seleccionado ? Border.all(color: Colors.black54, width: 3) : null,
         ),

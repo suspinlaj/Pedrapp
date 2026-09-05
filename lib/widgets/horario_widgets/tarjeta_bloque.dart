@@ -25,7 +25,7 @@ class TarjetaBloque extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colores.gris.withOpacity(0.5), width: 2),
+          border: Border.all(color: Colores.gris, width: 2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.03),
@@ -49,27 +49,27 @@ class TarjetaBloque extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(_formatTime(bloque.horaInicio), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const Text('|', style: TextStyle(color: Colores.gris, fontSize: 12)),
-                    Text(_formatTime(bloque.horaFin), style: const TextStyle(color: Colores.gris, fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(_formatTime(bloque.horaInicio), style: TextStyle(color: bloque.colorEtiqueta, fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text('|', style: TextStyle(color: bloque.colorEtiqueta, fontSize: 12)),
+                    Text(_formatTime(bloque.horaFin), style: TextStyle(color: bloque.colorEtiqueta, fontWeight: FontWeight.bold, fontSize: 14)),
                   ],
                 ),
               ),
-              Container(width: 1, color: Colores.gris.withOpacity(0.3), margin: const EdgeInsets.symmetric(vertical: 10)),
+              Container(width: 1, color: bloque.colorEtiqueta.withOpacity(0.3), margin: const EdgeInsets.symmetric(vertical: 10)),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
                     bloque.titulo,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    // --- SE HAN QUITADO LOS LÍMITES DE LÍNEAS AQUÍ ---
                   ),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(right: 16.0),
-                child: Icon(Icons.edit, color: Colores.gris, size: 20),
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                // --- LÁPIZ DEL COLOR DE LA CATEGORÍA ---
+                child: Icon(Icons.edit, color: bloque.colorEtiqueta, size: 20),
               )
             ],
           ),

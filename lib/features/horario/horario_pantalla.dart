@@ -140,7 +140,7 @@ class _HorarioPantallaState extends State<HorarioPantalla> {
                   },
                   backgroundColor: Colores.rojo,
                   icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text("Añadir Bloque", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  label: const Text("Añadir", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: const BorderSide(color: Colores.gris, width: 3),

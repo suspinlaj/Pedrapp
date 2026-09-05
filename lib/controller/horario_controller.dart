@@ -19,7 +19,7 @@ class HorarioController extends ChangeNotifier {
       bloques = [
         BloqueHorario(id: '1', diaSemana: 1, horaInicio: const TimeOfDay(hour: 15, minute: 30), horaFin: const TimeOfDay(hour: 17, minute: 0), titulo: 'Estudio General', colorEtiqueta: Colores.rojo),
         BloqueHorario(id: '2', diaSemana: 1, horaInicio: const TimeOfDay(hour: 17, minute: 0), horaFin: const TimeOfDay(hour: 17, minute: 30), titulo: 'Descanso / Merienda', colorEtiqueta: Colores.amarillo),
-        BloqueHorario(id: '3', diaSemana: 2, horaInicio: const TimeOfDay(hour: 18, minute: 0), horaFin: const TimeOfDay(hour: 20, minute: 0), titulo: 'A VER A SUSI', colorEtiqueta: Colors.green),
+        BloqueHorario(id: '3', diaSemana: 2, horaInicio: const TimeOfDay(hour: 18, minute: 0), horaFin: const TimeOfDay(hour: 20, minute: 0), titulo: 'A VER A LA MEJOR (Susana)', colorEtiqueta: Colors.green),
       ];
       // Guardar plantilla en la nube
       for (var bloque in bloques) {
