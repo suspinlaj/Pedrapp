@@ -32,13 +32,6 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
     CategoriaMarca(id: "cuerda", nombre: "Cuerda", icono: Icons.fitness_center, objetivo: 9.0),
   ];
 
-  // Definir colores que se irán asignando en orden a cada categoría de la lista
-  final List<Color> paletaColores = [
-    Colors.blue.shade400, Colors.cyan.shade400, Colors.lightBlue.shade400, 
-    Colors.orange.shade400, Colors.deepOrange.shade400, Colors.red.shade400, 
-    Colors.purple.shade400, Colors.deepPurple.shade400, Colors.brown.shade400, 
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -125,7 +118,7 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
     return DefaultTabController(
       length: 2, // Indicar 2 pestañas totales
       child: Scaffold(
-        // --- APLICAR FONDO BLANCO PURO AQUÍ ---
+        // ---  FONDO BLANCO ---
         backgroundColor: Colors.white,
         
         appBar: AppBar(
@@ -188,14 +181,14 @@ class _MarcasPantallaState extends State<MarcasPantalla> {
         body: TabBarView(
           children: [
             // Pestaña 1: Mostrar la lista de resumen en cajas individuales
-            _ListaResumen(categorias: misCategorias, colores: paletaColores),
+            _ListaResumen(categorias: misCategorias, colores: Colores.paleta), // CAMBIADO AQUÍ
             
             // Pestaña 2: Mostrar la cuadrícula de botones para entrar a los detalles
             Scaffold(
               backgroundColor: Colors.transparent, 
               body: _GridCategorias(
                 categorias: misCategorias, 
-                colores: paletaColores,
+                colores: Colores.paleta, // Colores paleta
                 alVolver: _cargarDatosReales, 
               ),
               floatingActionButton: FloatingActionButton.extended(
