@@ -3,7 +3,6 @@ import 'package:pedrapp/core/colores.dart';
 import 'package:pedrapp/modelos/bloque_horario.dart';
 import 'package:pedrapp/servicios/horario_service.dart';
 
-// Gestionar la lógica y el estado de la pantalla del horario
 class HorarioController extends ChangeNotifier {
   final HorarioService _horarioService = HorarioService();
   
@@ -15,7 +14,7 @@ class HorarioController extends ChangeNotifier {
     final datosNube = await _horarioService.cargarHorario();
 
     if (datosNube.isEmpty) {
-      // Cargar plantilla por defecto si es nuevo usuario
+      // Cargar plantilla por defecto
       bloques = [
         BloqueHorario(id: '1', diaSemana: 1, horaInicio: const TimeOfDay(hour: 15, minute: 30), horaFin: const TimeOfDay(hour: 17, minute: 0), titulo: 'Estudio General', colorEtiqueta: Colores.rojo),
         BloqueHorario(id: '2', diaSemana: 1, horaInicio: const TimeOfDay(hour: 17, minute: 0), horaFin: const TimeOfDay(hour: 17, minute: 30), titulo: 'Descanso / Merienda', colorEtiqueta: Colores.amarillo),
@@ -59,6 +58,6 @@ class HorarioController extends ChangeNotifier {
       ..sort((a, b) => _timeToMinutes(a.horaInicio).compareTo(_timeToMinutes(b.horaInicio)));
   }
 
-  // Convertir TimeOfDay a minutos totales (Uso interno)
+  // Convertir TimeOfDay a minutos totales 
   int _timeToMinutes(TimeOfDay time) => time.hour * 60 + time.minute;
 }

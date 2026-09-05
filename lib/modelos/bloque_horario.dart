@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// Definir modelo de datos para las franjas horarias
 class BloqueHorario {
   String id;
   int diaSemana; // 1 = Lunes, 7 = Domingo
