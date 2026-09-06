@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pedrapp/core/colores.dart';
+import 'package:pedrapp/features/horario/horario_pantalla.dart';
 import 'package:pedrapp/features/mapa/mapa_pantalla.dart';
 import 'package:pedrapp/features/marcas/marcas_pantalla.dart';
 import 'package:pedrapp/features/pomodoro/pomodoro_pantalla.dart';
@@ -122,6 +123,20 @@ class MenuPantalla extends StatelessWidget {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const UbicacionCompartidaPantalla()),
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    // --- HORARIO  ---
+                    _BotonMenu(
+                      titulo: 'HORARIO',
+                      icono: Icons.scoreboard,
+                      colorFondo: Colores.rojo,
+                      colorTexto: Colors.white,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const HorarioPantalla()),
                       ),
                     ),
                   ],
