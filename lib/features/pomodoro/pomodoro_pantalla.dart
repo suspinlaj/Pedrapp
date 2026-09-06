@@ -97,8 +97,8 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
     final double videoSize = size.width > 800
         ? 350.0 // Tamaño Web/Escritorio
         : size.width > 500
-            ? 250.0 // Tamaño Tablets
-            : size.width * 0.73; // Tamaño Móviles
+        ? 250.0 // Tamaño Tablets
+        : size.width * 0.73; // Tamaño Móviles
 
     final double paddingVertical = size.height * 0.04;
 
@@ -107,8 +107,11 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
       listenable: _controller,
       builder: (context, _) {
         // color según estudio o descanso
-        final colorTema = _controller.isFocusMode ? Colores.rojo : Colores.amarillo;
-        final bool mostrarEstudio = _controller.isFocusMode && _controller.isRunning;
+        final colorTema = _controller.isFocusMode
+            ? Colores.rojo
+            : Colores.amarillo;
+        final bool mostrarEstudio =
+            _controller.isFocusMode && _controller.isRunning;
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -118,18 +121,25 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
             titleSpacing: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-              onPressed: () => Navigator.pop(context), // Botón para volver atrás
+              onPressed: () =>
+                  Navigator.pop(context), // Botón para volver atrás
             ),
             title: const Padding(
               padding: EdgeInsets.only(top: 10.0),
               // Titulo
               child: Text(
                 'Pomodoro',
-                style: TextStyle(fontFamily: 'Titulo', color: Colors.white, fontSize: 28),
+                style: TextStyle(
+                  fontFamily: 'Titulo',
+                  color: Colors.white,
+                  fontSize: 28,
+                ),
               ),
             ),
             backgroundColor: Colores.rojo,
-            shape: const Border(bottom: BorderSide(color: Colores.gris, width: 3)),
+            shape: const Border(
+              bottom: BorderSide(color: Colores.gris, width: 3),
+            ),
             elevation: 0,
             actions: [
               // Muestra el switch únicamente si la plataforma soporta burbuja
@@ -138,22 +148,28 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                   icon: Icon(
                     Icons.layers,
                     // Verde si está activo, blanco/opaco si está desactivado
-                    color: isOverlayActive ? Colors.white : const Color.fromARGB(185, 234, 178, 182),
+                    color: isOverlayActive
+                        ? Colors.white
+                        : const Color.fromARGB(185, 234, 178, 182),
                     size: 28,
                   ),
-                  tooltip: isOverlayActive ? 'Burbuja activada' : 'Burbuja desactivada',
+                  tooltip: isOverlayActive
+                      ? 'Burbuja activada'
+                      : 'Burbuja desactivada',
                   onPressed: () async {
                     final bool nuevoEstado = !isOverlayActive;
 
                     if (nuevoEstado) {
                       // 1. Verificar si tenemos permiso otorgado por Android
-                      bool? isGranted = await FlutterOverlayWindow.isPermissionGranted();
+                      bool? isGranted =
+                          await FlutterOverlayWindow.isPermissionGranted();
 
                       if (isGranted != true) {
                         // Si no hay permiso, redirigimos a los ajustes
                         await FlutterOverlayWindow.requestPermission();
                         // Re-comprobar si el usuario lo activó
-                        isGranted = await FlutterOverlayWindow.isPermissionGranted();
+                        isGranted =
+                            await FlutterOverlayWindow.isPermissionGranted();
                       }
 
                       if (isGranted == true) {
@@ -177,7 +193,11 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                 ),
               // Botón estadísticas
               IconButton(
-                icon: const Icon(Icons.bar_chart, color: Colors.white, size: 30),
+                icon: const Icon(
+                  Icons.bar_chart,
+                  color: Colors.white,
+                  size: 30,
+                ),
                 tooltip: 'Ver historial',
                 onPressed: () {
                   showDialog(
@@ -202,28 +222,43 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                 child: SizedBox(
                   width: videoSize,
                   height: videoSize,
-                  // Muestra un vídeo u otro dependiendo del modo
                   child: mostrarEstudio
                       ? (_controller.videoEstudioInicializado
-                          ? FittedBox(
-                              fit: BoxFit.cover,
-                              child: SizedBox(
-                                width: _controller.estudioController!.value.size.width,
-                                height: _controller.estudioController!.value.size.height,
-                                child: VideoPlayer(_controller.estudioController!),
-                              ),
-                            )
-                          : const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colores.rojo)))
+                            ? FittedBox(
+                                fit: BoxFit.cover,
+                                child: SizedBox(
+                                  // 🔥 CLAVE: Usar tamaño fijo en lugar de .value.size.width
+                                  width: 200.0,
+                                  height: 200.0,
+                                  child: VideoPlayer(
+                                    _controller.estudioController!,
+                                  ),
+                                ),
+                              )
+                            : const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colores.rojo,
+                                ),
+                              ))
                       : (_controller.videoDescansoInicializado
-                          ? FittedBox(
-                              fit: BoxFit.cover,
-                              child: SizedBox(
-                                width: _controller.descansoController!.value.size.width,
-                                height: _controller.descansoController!.value.size.height,
-                                child: VideoPlayer(_controller.descansoController!),
-                              ),
-                            )
-                          : const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colores.amarillo))),
+                            ? FittedBox(
+                                fit: BoxFit.cover,
+                                child: SizedBox(
+                                  // 🔥 CLAVE: Usar tamaño fijo en lugar de .value.size.width
+                                  width: 200.0,
+                                  height: 200.0,
+                                  child: VideoPlayer(
+                                    _controller.descansoController!,
+                                  ),
+                                ),
+                              )
+                            : const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colores.amarillo,
+                                ),
+                              )),
                 ),
               ),
 
@@ -240,7 +275,9 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Text(
-                            _controller.isFocusMode ? '¡a estudiar vago!' : 'tiempo de haBLar a La Besto novia',
+                            _controller.isFocusMode
+                                ? '¡a estudiar vago!'
+                                : 'tiempo de haBLar a La Besto novia',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 20,
@@ -254,7 +291,10 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
 
                         // --- RELOJ GIGANTE ---
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 40,
+                            vertical: 30,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(24),
@@ -266,7 +306,9 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                               fontSize: size.width > 350 ? 80 : 65,
                               fontWeight: FontWeight.bold,
                               color: colorTema,
-                              fontFeatures: const [FontFeature.tabularFigures()],
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
                           ),
                         ),
@@ -283,14 +325,20 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                               label: 'Estudio',
                               value: _controller.focusMinutes,
                               colorTema: Colores.rojo,
-                              onChanged: (value) => _controller.updateDuration(isFocus: true, minutes: value),
+                              onChanged: (value) => _controller.updateDuration(
+                                isFocus: true,
+                                minutes: value,
+                              ),
                             ),
                             // DESCANSO
                             SelectorTiempo(
                               label: 'Descanso',
                               value: _controller.breakMinutes,
                               colorTema: Colores.amarillo,
-                              onChanged: (value) => _controller.updateDuration(isFocus: false, minutes: value),
+                              onChanged: (value) => _controller.updateDuration(
+                                isFocus: false,
+                                minutes: value,
+                              ),
                             ),
                           ],
                         ),
@@ -319,16 +367,26 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colores.gris, width: 3),
+                                  border: Border.all(
+                                    color: Colores.gris,
+                                    width: 3,
+                                  ),
                                 ),
                                 child: ListenableBuilder(
                                   listenable: _controller,
                                   builder: (context, _) {
-                                    final hayMusica = _controller.cancionSeleccionada != null &&
-                                        _controller.cancionSeleccionada!.id != 'ninguno';
+                                    final hayMusica =
+                                        _controller.cancionSeleccionada !=
+                                            null &&
+                                        _controller.cancionSeleccionada!.id !=
+                                            'ninguno';
                                     return Icon(
-                                      hayMusica ? Icons.headset_mic : Icons.music_note,
-                                      color: hayMusica ? Colores.rojo : Colores.gris,
+                                      hayMusica
+                                          ? Icons.headset_mic
+                                          : Icons.music_note,
+                                      color: hayMusica
+                                          ? Colores.rojo
+                                          : Colores.gris,
                                       size: 30,
                                     );
                                   },
@@ -340,16 +398,24 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                             GestureDetector(
                               onTap: _iniciarPomodoroGlobal,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                  vertical: 15,
+                                ),
                                 decoration: BoxDecoration(
                                   color: colorTema,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colores.gris, width: 3),
+                                  border: Border.all(
+                                    color: Colores.gris,
+                                    width: 3,
+                                  ),
                                 ),
                                 child: Text(
                                   _controller.isRunning ? 'Pausar' : 'Iniciar',
                                   style: TextStyle(
-                                    color: _controller.isFocusMode ? Colors.white : Colors.white,
+                                    color: _controller.isFocusMode
+                                        ? Colors.white
+                                        : Colors.white,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 20,
                                   ),
@@ -370,9 +436,16 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colores.gris, width: 3),
+                                  border: Border.all(
+                                    color: Colores.gris,
+                                    width: 3,
+                                  ),
                                 ),
-                                child: const Icon(Icons.refresh, color: Colores.gris, size: 30),
+                                child: const Icon(
+                                  Icons.refresh,
+                                  color: Colores.gris,
+                                  size: 30,
+                                ),
                               ),
                             ),
                           ],

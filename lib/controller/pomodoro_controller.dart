@@ -9,13 +9,12 @@ import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_overlay_window/flutter_overlay_window.dart'; 
-import 'package:pedrapp/data/canciones_data.dart';   
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+import 'package:pedrapp/data/canciones_data.dart';
 import 'package:pedrapp/servicios/pomodoro_service.dart';
 import 'package:pedrapp/servicios/notificaciones_service.dart';
 
 class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
-  
   // tiempos por defecto al abrir la app
   static const int _defaultFocusMinutes = 40;
   static const int _defaultBreakMinutes = 5;
@@ -28,12 +27,12 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   int _focusMinutes = _defaultFocusMinutes;
   int _breakMinutes = _defaultBreakMinutes;
   late int _secondsLeft;
-  
-  Timer? _timer; 
-  Timer? _latidoEnPausaTimer; 
-  
-  bool _isRunning = false; 
-  bool _isFocusMode = true; 
+
+  Timer? _timer;
+  Timer? _latidoEnPausaTimer;
+
+  bool _isRunning = false;
+  bool _isFocusMode = true;
 
   // variables historial de estudio
   int minutosHoy = 0;
@@ -42,18 +41,18 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   // controladores multimedia
   VideoPlayerController? estudioController;
   VideoPlayerController? descansoController;
-  final AudioPlayer _musicPlayer = AudioPlayer(); 
+  final AudioPlayer _musicPlayer = AudioPlayer();
   CancionPomodoro? _cancionSeleccionada;
   String? _rutaAudioCargada;
 
   // variables sistema y comunicación nativa
-  bool _isInitialized = false; 
-  final ReceivePort _receivePort = ReceivePort(); 
+  bool _isInitialized = false;
+  final ReceivePort _receivePort = ReceivePort();
 
   // Comprobar compatibilidad del dispositivo con burbujas flotantes nativas
   bool get _soportaBurbujaFlotante {
-    if (kIsWeb) return false; 
-    return Platform.isAndroid; 
+    if (kIsWeb) return false;
+    return Platform.isAndroid;
   }
 
   int get focusMinutes => _focusMinutes;
@@ -61,8 +60,10 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   int get secondsLeft => _secondsLeft;
   bool get isRunning => _isRunning;
   bool get isFocusMode => _isFocusMode;
-  bool get videoEstudioInicializado => estudioController?.value.isInitialized ?? false;
-  bool get videoDescansoInicializado => descansoController?.value.isInitialized ?? false;
+  bool get videoEstudioInicializado =>
+      estudioController?.value.isInitialized ?? false;
+  bool get videoDescansoInicializado =>
+      descansoController?.value.isInitialized ?? false;
   CancionPomodoro? get cancionSeleccionada => _cancionSeleccionada;
 
   PomodoroController._internal() {
@@ -71,7 +72,20 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
 
   // Arrancar controlador al abrir la pantalla por primera vez
   void inicializar(BuildContext context) {
-    if (_isInitialized) return; 
+    if (_isInitialized) return;
+    _musicPlayer.playerStateStream.listen((state) {
+      debugPrint(
+        '🎵 Estado reproductor: playing=${state.playing}, processingState=${state.processingState}',
+      );
+    });
+
+    // Escuchar errores en la fuente de audio
+    _musicPlayer.playbackEventStream.listen(
+      (event) {},
+      onError: (Object e, StackTrace stackTrace) {
+        debugPrint('❌ Error en el stream de audio: $e');
+      },
+    );
 
     // Registrar observador del ciclo de vida de la app
     WidgetsBinding.instance.addObserver(this);
@@ -79,19 +93,22 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     // Configurar conexión con la burbuja en dispositivos compatibles
     if (_soportaBurbujaFlotante) {
       IsolateNameServer.removePortNameMapping('pomodoro_port');
-      IsolateNameServer.registerPortWithName(_receivePort.sendPort, 'pomodoro_port');
-      
-      // Escuchar Play/Pausa 
+      IsolateNameServer.registerPortWithName(
+        _receivePort.sendPort,
+        'pomodoro_port',
+      );
+
+      // Escuchar Play/Pausa
       _receivePort.listen((message) {
         if (message == "TOGGLE") {
-          startStopTimer(); 
+          startStopTimer();
         }
       });
 
-      // Escuchar Play/Pausa 
+      // Escuchar Play/Pausa
       FlutterOverlayWindow.overlayListener.listen((event) {
         if (event == "TOGGLE") {
-          startStopTimer(); 
+          startStopTimer();
         }
       });
     }
@@ -100,8 +117,8 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     NotificacionesService.inicializar();
     _initializeVideos();
     _cargarHistorial();
-    _cargarAjustesMusica(); 
-    _configureAudioSession(); 
+    _cargarAjustesMusica();
+    _configureAudioSession();
 
     _isInitialized = true;
   }
@@ -120,7 +137,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _latidoEnPausaTimer?.cancel();
-    
+
     // Cerrar el puerto de comunicación activo
     if (_soportaBurbujaFlotante) {
       IsolateNameServer.removePortNameMapping('pomodoro_port');
@@ -129,11 +146,13 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // Enviar tiempo y estado actual al widget flotante 
+  // Enviar tiempo y estado actual al widget flotante
   void _sincronizarRelojFlotante() async {
-    if (!_soportaBurbujaFlotante) return; 
+    if (!_soportaBurbujaFlotante) return;
 
-    final SendPort? overlayPort = IsolateNameServer.lookupPortByName('overlay_pomodoro_port');
+    final SendPort? overlayPort = IsolateNameServer.lookupPortByName(
+      'overlay_pomodoro_port',
+    );
     if (overlayPort != null) {
       String paquete = "SYNC|${formatTime()}|$_isFocusMode|$_isRunning";
       overlayPort.send(paquete);
@@ -142,9 +161,11 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
 
   // Forzar destrucción de la ventana flotante
   void _matarRelojFlotante() {
-    if (!_soportaBurbujaFlotante) return; 
+    if (!_soportaBurbujaFlotante) return;
 
-    final SendPort? overlayPort = IsolateNameServer.lookupPortByName('overlay_pomodoro_port');
+    final SendPort? overlayPort = IsolateNameServer.lookupPortByName(
+      'overlay_pomodoro_port',
+    );
     if (overlayPort != null) {
       overlayPort.send("KILL");
     }
@@ -154,13 +175,14 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   // Recuperar canción guardada en preferencias locales
   Future<void> _cargarAjustesMusica() async {
     final prefs = await SharedPreferences.getInstance();
-    final String cancionGuardadaId = prefs.getString('pomodoro_musica_id') ?? 'ninguno';
-    
+    final String cancionGuardadaId =
+        prefs.getString('pomodoro_musica_id') ?? 'ninguno';
+
     _cancionSeleccionada = CancionesData.listaDeCanciones.firstWhere(
       (c) => c.id == cancionGuardadaId,
-      orElse: () => CancionesData.listaDeCanciones.first, 
+      orElse: () => CancionesData.listaDeCanciones.first,
     );
-    notifyListeners(); 
+    notifyListeners();
   }
 
   // Configurar sesión de audio para el sistema operativo
@@ -181,9 +203,9 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   // Reproducir o detener archivo de audio según estado temporizador
   Future<void> _gestionarMusicaDeFondo() async {
     // Detener música si no hay pista válida o el reloj está pausado
-    if (_cancionSeleccionada == null || 
-        _cancionSeleccionada!.id == 'ninguno' || 
-        !_isFocusMode || 
+    if (_cancionSeleccionada == null ||
+        _cancionSeleccionada!.id == 'ninguno' ||
+        !_isFocusMode ||
         !_isRunning) {
       if (_musicPlayer.playing) {
         await _musicPlayer.stop();
@@ -193,21 +215,23 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
 
     // Iniciar reproducción en bucle
     try {
-      if (_rutaAudioCargada != _cancionSeleccionada!.assetPath) {
-        await _musicPlayer.setAsset(_cancionSeleccionada!.assetPath);
-        await _musicPlayer.setLoopMode(LoopMode.one); 
-        await _musicPlayer.setVolume(0.5); 
-        _rutaAudioCargada = _cancionSeleccionada!.assetPath;
-      }
-      
-      if (!_musicPlayer.playing) {
-        final session = await AudioSession.instance;
-        if (await session.setActive(true)) {
-          _musicPlayer.play();
-        }
-      }
-    } catch (e) {
-      debugPrint("Error reproduciendo música: $e");
+      String ruta = _cancionSeleccionada!.assetPath;
+      debugPrint('🔍 Intentando cargar: $ruta');
+
+      // Limpiar 'assets/' si existe para prueba
+      await _musicPlayer.setAsset(ruta);
+      debugPrint('✅ Asset cargado correctamente');
+
+      await _musicPlayer.setLoopMode(LoopMode.one);
+      await _musicPlayer.setVolume(
+        1.0,
+      ); // Subir a 1.0 para descartar volumen bajo
+
+      debugPrint('▶️ Ejecutando _musicPlayer.play()...');
+      await _musicPlayer.play();
+    } catch (e, stack) {
+      debugPrint('❌ Excepción al reproducir: $e');
+      debugPrint('📌 StackTrace: $stack');
     }
   }
 
@@ -249,25 +273,31 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     PomodoroService.sumarTiempoAlHistorial(minutos);
   }
 
-  // Cargar activos mp4 
+  // Cargar activos mp4
   void _initializeVideos() {
-    estudioController = VideoPlayerController.asset('assets/images/pomodoro_estudio.mp4',
-        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true))
-      ..initialize().then((_) {
-        estudioController?.setLooping(true);
-        estudioController?.setVolume(0.0); 
-        _actualizarEstadoVideos();
-        notifyListeners();
-      });
+    estudioController =
+        VideoPlayerController.asset(
+            'assets/images/pomodoro_estudio.mp4',
+            videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+          )
+          ..initialize().then((_) {
+            estudioController?.setLooping(true);
+            estudioController?.setVolume(0.0);
+            _actualizarEstadoVideos();
+            notifyListeners();
+          });
 
-    descansoController = VideoPlayerController.asset('assets/images/pomodoro_descanso.mp4',
-        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true))
-      ..initialize().then((_) {
-        descansoController?.setLooping(true);
-        descansoController?.setVolume(0.0);
-        _actualizarEstadoVideos();
-        notifyListeners();
-      });
+    descansoController =
+        VideoPlayerController.asset(
+            'assets/images/pomodoro_descanso.mp4',
+            videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+          )
+          ..initialize().then((_) {
+            descansoController?.setLooping(true);
+            descansoController?.setVolume(0.0);
+            _actualizarEstadoVideos();
+            notifyListeners();
+          });
   }
 
   // Alternar estado global del temporizador
@@ -283,35 +313,35 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
   // Iniciar conteo regresivo
   void _startTimer() {
     _isRunning = true;
-    _latidoEnPausaTimer?.cancel(); 
-    
+    _latidoEnPausaTimer?.cancel();
+
     _actualizarEstadoVideos();
     _gestionarMusicaDeFondo();
-    _sincronizarRelojFlotante(); 
+    _sincronizarRelojFlotante();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsLeft > 0) {
         // Restar un segundo al contador activo
-        _secondsLeft--; 
-        _showTimerNotification(); 
+        _secondsLeft--;
+        _showTimerNotification();
       } else {
         // Detener conteo al llegar a cero
         timer.cancel();
-        
+
         // Sumar tiempo si el modo era estudio
-        if (_isFocusMode) _sumarTiempoAlHistorial(_focusMinutes); 
-        
+        if (_isFocusMode) _sumarTiempoAlHistorial(_focusMinutes);
+
         // Alternar modo de trabajo
-        _isFocusMode = !_isFocusMode; 
-        
+        _isFocusMode = !_isFocusMode;
+
         // Reiniciar tiempo al nuevo modo correspondiente
-        _secondsLeft = _isFocusMode ? _focusMinutes * 60 : _breakMinutes * 60; 
-        
+        _secondsLeft = _isFocusMode ? _focusMinutes * 60 : _breakMinutes * 60;
+
         _isRunning = false;
         _actualizarEstadoVideos();
-        _gestionarMusicaDeFondo(); 
-        _showCompletionNotification(); 
-        
+        _gestionarMusicaDeFondo();
+        _showCompletionNotification();
+
         // Iniciar pausa automáticamente al terminar el bloque
         if (_soportaBurbujaFlotante) {
           _latidoEnPausaTimer?.cancel();
@@ -320,10 +350,10 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
           });
         }
       }
-      
+
       // Actualizar información visual global
-      _sincronizarRelojFlotante(); 
-      notifyListeners(); 
+      _sincronizarRelojFlotante();
+      notifyListeners();
     });
   }
 
@@ -332,12 +362,12 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     _timer?.cancel();
     _isRunning = false;
     _actualizarEstadoVideos();
-    _gestionarMusicaDeFondo(); 
+    _gestionarMusicaDeFondo();
     NotificacionesService.cancelar();
-    _sincronizarRelojFlotante(); 
+    _sincronizarRelojFlotante();
     notifyListeners();
 
-    // Mantener comunicación viva 
+    // Mantener comunicación viva
     if (_soportaBurbujaFlotante) {
       _latidoEnPausaTimer?.cancel();
       _latidoEnPausaTimer = Timer.periodic(const Duration(seconds: 2), (_) {
@@ -351,7 +381,7 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     _stopTimer();
     _latidoEnPausaTimer?.cancel();
     _secondsLeft = _isFocusMode ? _focusMinutes * 60 : _breakMinutes * 60;
-    _matarRelojFlotante(); 
+    _matarRelojFlotante();
     notifyListeners();
   }
 
@@ -389,8 +419,12 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
 
   // Lanzar notificación de sistema de bloque finalizado
   void _showCompletionNotification() {
-    final title = _isFocusMode ? '¡A estudiar vago!' : 'Hora de tu esperado descansito awa';
-    final body = _isFocusMode ? '¡Deja los juegos!, vuelta a estudiar jaja' : '¡Tiempo de hablar a la besto novia!';
+    final title = _isFocusMode
+        ? '¡A estudiar vago!'
+        : 'Hora de tu esperado descansito awa';
+    final body = _isFocusMode
+        ? '¡Deja los juegos!, vuelta a estudiar jaja'
+        : '¡Tiempo de hablar a la besto novia!';
     NotificacionesService.mostrarCompletado(title, body);
   }
 }

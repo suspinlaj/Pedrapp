@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_auth
   firebase_core
   geolocator_windows
+  just_audio_windows
   url_launcher_windows
 )
 
