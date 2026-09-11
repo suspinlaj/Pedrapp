@@ -7,6 +7,7 @@ import 'dart:io' show Platform;
 import 'package:pedrapp/modelos/cancion_pomodoro.dart';
 import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart'; 
@@ -194,7 +195,15 @@ class PomodoroController extends ChangeNotifier with WidgetsBindingObserver {
     // Iniciar reproducción en bucle
     try {
       if (_rutaAudioCargada != _cancionSeleccionada!.assetPath) {
-        await _musicPlayer.setAsset(_cancionSeleccionada!.assetPath);
+        final audioSource = AudioSource.asset(
+          _cancionSeleccionada!.assetPath,
+          tag: MediaItem(
+            id: _cancionSeleccionada!.assetPath,
+            album: "Pedrapp Pomodoro",
+            title: _cancionSeleccionada!.nombre,
+          ),
+        );
+        await _musicPlayer.setAudioSource(audioSource);
         await _musicPlayer.setLoopMode(LoopMode.one); 
         await _musicPlayer.setVolume(0.5); 
         _rutaAudioCargada = _cancionSeleccionada!.assetPath;

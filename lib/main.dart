@@ -4,6 +4,7 @@ import 'package:pedrapp/features/portada/portada_pantalla.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:pedrapp/widgets/pomodoro/reloj_flotante_sistema.dart';
 import 'firebase_options.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -31,6 +32,13 @@ void main() async {
       ?.requestNotificationsPermission();
 
   // Arrancar app
+
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.tuempresa.pedrapp.channel.audio',
+    androidNotificationChannelName: 'Reproducción de Audio',
+    androidNotificationOngoing: true,
+  );
+
   runApp(const PedrApp());
 }
 
