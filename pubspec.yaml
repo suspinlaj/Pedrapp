@@ -48,7 +48,8 @@ dependencies:
   geolocator: ^14.0.3
   video_player: ^2.8.6
   just_audio: ^0.9.36
-  just_audio_windows: ^0.2.2 #
+  just_audio_background: ^0.0.1-beta.17
+  just_audio_windows: ^0.2.2 #      
   audio_session: ^0.1.19
   flutter_overlay_window: ^0.5.0
 
@@ -88,6 +89,7 @@ flutter:
   - assets/audio/lluvia.mp3
   - assets/audio/minecraft.mp3
   - assets/audio/pajaritos.mp3
+  - assets/audio/relajante.mp3
   - assets/audio/pokemon.mp3
   - assets/audio/pokemon2.mp3
   - assets/audio/rose.mp3

@@ -11,6 +11,12 @@ class CancionesData {
       icono: Icons.music_off,
     ),
     CancionPomodoro(
+      id: 'relajante', 
+      nombre: 'relajante', 
+      assetPath: 'assets/audio/relajante.mp3', 
+      icono: Icons.self_improvement,
+    ),
+    CancionPomodoro(
       id: 'minecraft', 
       nombre: 'Minecraft', 
       assetPath: 'assets/audio/minecraft.mp3', 
