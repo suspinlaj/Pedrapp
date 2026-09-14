@@ -7,9 +7,11 @@ import 'package:pedrapp/widgets/dialog_recuperar_datos.dart';
 
 class PortadaPantalla extends StatelessWidget {
   const PortadaPantalla({super.key});
+  
 
   @override
   Widget build(BuildContext context) {
+    
     // evitar redibujos innecesarios
     final altoPantalla = MediaQuery.sizeOf(context).height;
     final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
