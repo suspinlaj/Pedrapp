@@ -51,20 +51,6 @@ class _PomodoroPantallaState extends State<PomodoroPantalla> {
         return; 
       }
       
-      // Si hay permiso y la burbuja no está abierta ya, dibujarla en pantalla
-      if (await FlutterOverlayWindow.isActive() == false) {
-        await FlutterOverlayWindow.showOverlay(
-          enableDrag: true, // Permitir moverla con el dedo
-          overlayTitle: "Pedrapp", 
-          overlayContent: "⌛", 
-          flag: OverlayFlag.defaultFlag,
-          alignment: OverlayAlignment.center,
-          visibility: NotificationVisibility.visibilitySecret, 
-          positionGravity: PositionGravity.none,
-          width: 300, 
-          height: 300,
-        );
-      }
     }
 
     // empezar a contar el tiempo
