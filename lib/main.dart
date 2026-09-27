@@ -31,18 +31,22 @@ void main() async {
         '12345678-1234-1234-1234-123456789abc', // Un GUID de identificador único
   );
   const InitializationSettings initializationSettings = InitializationSettings(
-    android: androidInitializationSettings,
-    iOS: iosInitializationSettings,
-    windows: initializationSettingsWindows,
-  );
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  android: androidInitializationSettings,
+  iOS: iosInitializationSettings,
+  windows: initializationSettingsWindows,
+);
 
-  // --- Solicitar permiso de notificaciones ---
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >()
-      ?.requestNotificationsPermission();
+// Se añade "initializationSettings:" antes de la variable
+await flutterLocalNotificationsPlugin.initialize(
+  settings: initializationSettings,
+);
+
+// --- Solicitar permiso de notificaciones ---
+await flutterLocalNotificationsPlugin
+    .resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin
+    >()
+    ?.requestNotificationsPermission();
 
   // Arrancar app
 

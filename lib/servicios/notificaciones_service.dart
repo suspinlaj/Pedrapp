@@ -3,26 +3,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificacionesService {
-  static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
   static const int _notificationId = 1;
 
   static Future<void> inicializar() async {
     try {
-      const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/icon');
-      const DarwinInitializationSettings iosSettings = DarwinInitializationSettings();
+      const AndroidInitializationSettings androidSettings =
+          AndroidInitializationSettings('@mipmap/icon');
+      const DarwinInitializationSettings iosSettings =
+          DarwinInitializationSettings();
       const InitializationSettings settings = InitializationSettings(
         android: androidSettings,
         iOS: iosSettings,
       );
-      
-      await _plugin.initialize(settings);
+
+      await _plugin.initialize(settings: settings);
 
       // --- Pedir permisos automáticamente al usuario ---
       if (Platform.isAndroid) {
-        final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+        final androidPlugin = _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
         await androidPlugin?.requestNotificationsPermission();
-      } 
+      }
     } catch (e) {
       debugPrint("Error inicializando notificaciones: $e");
     }
@@ -31,10 +36,10 @@ class NotificacionesService {
   static Future<void> mostrarEnProgreso(String titulo, String cuerpo) async {
     try {
       await _plugin.show(
-        _notificationId,
-        titulo,
-        cuerpo,
-        const NotificationDetails(
+        id: _notificationId,
+        title: titulo,
+        body: cuerpo,
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'pomodoro_channel',
             'Pomodoro',
@@ -47,7 +52,11 @@ class NotificacionesService {
             showWhen: false,
             onlyAlertOnce: true,
           ),
-          iOS: DarwinNotificationDetails(presentAlert: false, presentBadge: false, presentSound: false),
+          iOS: DarwinNotificationDetails(
+            presentAlert: false,
+            presentBadge: false,
+            presentSound: false,
+          ),
         ),
       );
     } catch (_) {}
@@ -56,10 +65,10 @@ class NotificacionesService {
   static Future<void> mostrarCompletado(String titulo, String cuerpo) async {
     try {
       await _plugin.show(
-        _notificationId,
-        titulo,
-        cuerpo,
-        const NotificationDetails(
+        id: _notificationId,
+        title: titulo,
+        body: cuerpo,
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'pomodoro_channel',
             'Pomodoro',
@@ -69,7 +78,11 @@ class NotificacionesService {
             visibility: NotificationVisibility.private,
             showWhen: true,
           ),
-          iOS: DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
       );
     } catch (_) {}
@@ -77,7 +90,7 @@ class NotificacionesService {
 
   static Future<void> cancelar() async {
     try {
-      await _plugin.cancel(_notificationId);
+      await _plugin.cancel(id: _notificationId);
     } catch (_) {}
   }
 }
